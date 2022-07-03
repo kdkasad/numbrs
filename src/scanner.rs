@@ -45,7 +45,7 @@ impl Iterator for Scanner<'_> {
             }
 
             if let Ok(op) = Operation::try_from(c) {
-                return Some(Token::Operation(op));
+                return Some(Token::Operator(op));
             }
 
             if c == '0' {
@@ -96,7 +96,7 @@ pub enum Error {
 pub enum Token {
     Illegal(Error),
 
-    Operation(Operation),
+    Operator(Operation),
     LParen,
     RParen,
 
@@ -105,7 +105,7 @@ pub enum Token {
 
 impl From<Operation> for Token {
     fn from(op: Operation) -> Self {
-        Token::Operation(op)
+        Token::Operator(op)
     }
 }
 
@@ -153,11 +153,11 @@ mod tests {
 
             let expected = vec![
                 Number(Decimal, "1".to_string()),
-                Operation(Add),
+                Operator(Add),
                 Number(Binary, "10".to_string()),
-                Operation(Multiply),
+                Operator(Multiply),
                 Number(Hexadecimal, "3".to_string()),
-                Operation(Divide),
+                Operator(Divide),
                 Number(Decimal, "4.2".to_string()),
             ];
             assert_eq!(tokens, expected);
@@ -166,13 +166,13 @@ mod tests {
         let src = "3 * (2 + 1) / 0.5";
         let expected = vec![
             Number(Decimal, "3".to_string()),
-            Operation(Multiply),
+            Operator(Multiply),
             LParen,
             Number(Decimal, "2".to_string()),
-            Operation(Add),
+            Operator(Add),
             Number(Decimal, "1".to_string()),
             RParen,
-            Operation(Divide),
+            Operator(Divide),
             Number(Decimal, ".5".to_string()),
         ];
         let tokens: Vec<Token> = Scanner::new(src).collect();
