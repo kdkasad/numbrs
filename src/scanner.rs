@@ -76,7 +76,7 @@ impl Iterator for Scanner<'_> {
             Some(match c {
                 '(' => Token::LParen,
                 ')' => Token::RParen,
-                _ => Token::Illegal(Error::Unknown),
+                _ => Token::Illegal(Error::IllegalInput(c)),
             })
         } else {
             None
@@ -86,10 +86,8 @@ impl Iterator for Scanner<'_> {
 
 #[derive(Copy, Clone, Debug, Error, PartialEq)]
 pub enum Error {
-    #[error("invalid digit '{0}' for {1}")]
-    InvalidDigitForBase(char, NumberBase),
-    #[error("unknown error during scanning")]
-    Unknown,
+    #[error("invalid character '{0}' in input")]
+    IllegalInput(char),
 }
 
 #[derive(Clone, Debug, PartialEq)]
