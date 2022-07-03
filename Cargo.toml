@@ -1,0 +1,13 @@
+[package]
+name = "numbrs"
+version = "0.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+decimal = "2.1.0"
+thiserror = "1.0"
+
+[dev-dependencies]
+pretty_assertions = "1.2.1"
