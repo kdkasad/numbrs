@@ -30,6 +30,29 @@ pub enum Operation {
     Divide,
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum Associativity {
+    Left,
+    Right,
+}
+
+impl Operation {
+    pub fn precedence(&self) -> u32 {
+        use Operation::*;
+        match self {
+            Add | Subtract => 20,
+            Multiply | Divide => 40,
+        }
+    }
+
+    pub fn associativity(&self) -> Associativity {
+        use Operation::*;
+        match self {
+            Add | Subtract | Multiply | Divide => Associativity::Left,
+        }
+    }
+}
+
 impl fmt::Display for Operation {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         use Operation::*;
