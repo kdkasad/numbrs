@@ -71,7 +71,7 @@ impl<'a> Parser<'a> {
         }
 
         if output.len() != 1 {
-            return Err(Error::UnknownError);
+            return Err(Error::MultipleRoots);
         }
 
         Ok(output.pop().unwrap())
@@ -236,11 +236,11 @@ pub enum Error {
     #[error("unexpected token: expected {0:?}, found {1:?}")]
     UnexpectedToken(Expectation, Token),
 
-    #[error("unknown runtime error")]
-    UnknownError,
-
     #[error("not enough operands for operation '{0}'")]
     MissingOperands(Operation),
+
+    #[error("input does not form a single syntax tree. Did you forget some operators?")]
+    MultipleRoots,
 }
 
 #[cfg(test)]
