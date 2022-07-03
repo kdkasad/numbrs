@@ -2,6 +2,7 @@ use decimal::d128;
 use std::fmt;
 use thiserror::Error;
 
+#[derive(Debug, PartialEq)]
 pub enum Node {
     Binary {
         operation: Operation,
