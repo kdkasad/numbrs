@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 decimal = "2.1.0"
 thiserror = "1.0"
+rustyline = "9.1.2"
 
 [dev-dependencies]
 pretty_assertions = "1.2.1"
