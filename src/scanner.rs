@@ -17,16 +17,13 @@ impl<'a> Scanner<'a> {
         }
     }
 
+    #[allow(clippy::needless_return)]
     fn collect_digits(&mut self, base: NumberBase) -> String {
         let mut s = String::with_capacity(128); // assume most numbers are <128 chars
-        loop {
-            if let Some(&c) = self.stream.peek() {
-                if c.is_digit(base as u32) || c == '.' {
-                    s.push(c);
-                    self.stream.next(); // consume digit
-                } else {
-                    break;
-                }
+        while let Some(&c) = self.stream.peek() {
+            if c.is_digit(base as u32) || c == '.' {
+                s.push(c);
+                self.stream.next(); // consume digit
             } else {
                 break;
             }

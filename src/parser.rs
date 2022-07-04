@@ -91,13 +91,13 @@ impl<'a> Parser<'a> {
     ) -> Result<()> {
         // this check is redundant as handle_operator is never called when expecting an operand
         if *expect == Expectation::OperandToken {
-            return Err(Error::UnexpectedToken(*expect, curtok.clone()));
+            return Err(Error::UnexpectedToken(*expect, curtok));
         }
 
         // extract operation from operator token
         let curop = match curtok {
             Token::Operator(op) => op,
-            _ => return Err(Error::UnexpectedToken(*expect, curtok.clone())),
+            _ => return Err(Error::UnexpectedToken(*expect, curtok)),
         };
 
         while let Some(top) = opstack.last() {
@@ -141,7 +141,7 @@ impl<'a> Parser<'a> {
     ) -> Result<()> {
         // this check is redundant as handle_rparen is never called when expecting an operand
         if *expect == Expectation::OperandToken {
-            return Err(Error::UnexpectedToken(*expect, curtok.clone()));
+            return Err(Error::UnexpectedToken(*expect, curtok));
         }
 
         // search for left parenthesis
@@ -154,7 +154,7 @@ impl<'a> Parser<'a> {
             Self::add_to_output(output, top)?;
         }
 
-        if opstack.len() == 0 && !found {
+        if opstack.is_empty() && !found {
             // if stack is empty, no matching parenthesis was found
             return Err(Error::UnmatchedParentheses);
         }
@@ -170,7 +170,7 @@ impl<'a> Parser<'a> {
         match tok {
             Operator(op) => match op {
                 UnaryAdd | UnarySubtract => {
-                    if output.len() < 1 {
+                    if output.is_empty() {
                         return Err(Error::MissingOperands(op));
                     }
                     let expr = output.pop().unwrap();
@@ -227,7 +227,7 @@ fn digits_to_node(digits: &str, base: NumberBase) -> Result<Node> {
     match base {
         NumberBase::Decimal => match d128::from_str(digits) {
             Ok(n) => value = n,
-            Err(_) => return Err(Error::ParseDecimalError(digits.to_owned())),
+            Err(_) => return Err(Error::ParseDecimal(digits.to_owned())),
         },
         _ => value = d128::from(u64::from_str_radix(digits, base as u32)?),
     }
@@ -238,7 +238,7 @@ fn digits_to_node(digits: &str, base: NumberBase) -> Result<Node> {
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("error scanning input: {0}")]
-    ScannerError(#[from] scanner::Error),
+    Scanner(#[from] scanner::Error),
 
     #[error("unmatched parentheses")]
     UnmatchedParentheses,
@@ -247,10 +247,10 @@ pub enum Error {
     UnexpectedEndOfInput(Expectation),
 
     #[error("failed to parse decimal number '{0}'")]
-    ParseDecimalError(String),
+    ParseDecimal(String),
 
     #[error("failed to parse integer: {0}")]
-    ParseIntError(#[from] std::num::ParseIntError),
+    ParseInt(#[from] std::num::ParseIntError),
 
     #[error("unexpected token: expected {0:?}, found {1:?}")]
     UnexpectedToken(Expectation, Token),
