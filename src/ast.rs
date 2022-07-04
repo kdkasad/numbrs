@@ -14,6 +14,7 @@ pub enum Node {
         expr: Box<Node>,
     },
     Number(d128),
+    Variable(String),
 }
 
 impl Node {
@@ -22,6 +23,7 @@ impl Node {
             Node::Binary { .. } => "Node::Binary",
             Node::Unary { .. } => "Node::Unary",
             Node::Number(_) => "Node::Number",
+            Node::Variable(_) => "Node::Variable",
         }
     }
 }
