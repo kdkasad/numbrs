@@ -46,6 +46,7 @@ impl<'a> Parser<'a> {
                 }
 
                 LParen if expect == OperandToken => opstack.push(tok),
+
                 RParen if expect == OperatorToken => {
                     Self::handle_rparen(&mut expect, tok, &mut output, &mut opstack)?;
                 }
@@ -139,19 +140,18 @@ impl<'a> Parser<'a> {
         }
 
         // search for left parenthesis
+        let mut found = false;
         while let Some(top) = opstack.pop() {
             if let Token::LParen = top {
+                found = true;
                 break;
             }
             Self::add_to_output(output, top)?;
         }
 
-        if opstack.len() == 0 {
+        if opstack.len() == 0 && !found {
             // if stack is empty, no matching parenthesis was found
             return Err(Error::UnmatchedParentheses);
-        } else {
-            // otherwise, remove left parenthesis token
-            opstack.pop().unwrap();
         }
 
         *expect = Expectation::OperatorToken;
