@@ -1,6 +1,8 @@
 use crate::eval::Eval;
 use crate::parser::Parser;
+use decimal::d128;
 use rustyline::{error::ReadlineError, Editor};
+use std::collections::HashMap;
 
 mod ast;
 mod eval;
@@ -16,6 +18,7 @@ const COLOR_RST: &str = "\x1b[m";
 fn main() {
     // TODO: add completion helper
     let mut rl = Editor::<()>::new();
+    let env: HashMap<String, d128> = HashMap::new();
 
     loop {
         match rl.readline(PROMPT) {
@@ -26,7 +29,7 @@ fn main() {
                 match p.parse() {
                     Ok(ast) => {
                         println!("{:?}", ast);
-                        match ast.eval() {
+                        match ast.eval(&env) {
                             Ok(value) => println!("{}", value),
                             Err(e) => println!("{}Error:{} {}", COLOR_ERR, COLOR_RST, e),
                         };
