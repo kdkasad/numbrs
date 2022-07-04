@@ -13,7 +13,7 @@ impl Eval for Node {
             Node::Binary { .. } => self.eval_binary_node(env),
             Node::Unary { .. } => self.eval_unary_node(env),
             Node::Number(value) => Ok(*value),
-            Node::Variable(name) => self.eval_variable_node(env),
+            Node::Variable(_) => self.eval_variable_node(env),
         }
     }
 }
