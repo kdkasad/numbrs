@@ -28,6 +28,10 @@ pub enum Operation {
     Subtract,
     Multiply,
     Divide,
+
+    // not recognizable by scanner but used by parser
+    UnaryAdd,
+    UnarySubtract,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -42,6 +46,7 @@ impl Operation {
         match self {
             Add | Subtract => 20,
             Multiply | Divide => 40,
+            UnaryAdd | UnarySubtract => 60,
         }
     }
 
@@ -49,6 +54,7 @@ impl Operation {
         use Operation::*;
         match self {
             Add | Subtract | Multiply | Divide => Associativity::Left,
+            UnaryAdd | UnarySubtract => Associativity::Left, // doesn't matter (I think)
         }
     }
 }
@@ -60,8 +66,8 @@ impl fmt::Display for Operation {
             f,
             "{}",
             match self {
-                Add => '+',
-                Subtract => '-',
+                Add | UnaryAdd => '+',
+                Subtract | UnarySubtract => '-',
                 Multiply => '*',
                 Divide => '/',
             }

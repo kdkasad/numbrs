@@ -38,7 +38,12 @@ impl<'a> Parser<'a> {
                 }
 
                 Operator(Add | Subtract) if expect == OperandToken => {
-                    todo!("implicit unary operation handling")
+                    let newtok = Operator(match tok {
+                        Operator(Add) => UnaryAdd,
+                        Operator(Subtract) => UnarySubtract,
+                        _ => unreachable!(),
+                    });
+                    opstack.push(newtok);
                 }
 
                 Operator(_) if expect == OperatorToken => {
@@ -159,22 +164,36 @@ impl<'a> Parser<'a> {
     }
 
     fn add_to_output(output: &mut Vec<Node>, tok: Token) -> Result<()> {
+        use Operation::*;
         use Token::*;
 
         match tok {
-            Operator(op) => {
-                if output.len() < 2 {
-                    return Err(Error::MissingOperands(op));
+            Operator(op) => match op {
+                UnaryAdd | UnarySubtract => {
+                    if output.len() < 1 {
+                        return Err(Error::MissingOperands(op));
+                    }
+                    let expr = output.pop().unwrap();
+                    output.push(Node::Unary {
+                        operation: op,
+                        expr: Box::from(expr),
+                    });
                 }
-                let rhs = output.pop().unwrap();
-                let lhs = output.pop().unwrap();
 
-                output.push(Node::Binary {
-                    lhs: Box::from(lhs),
-                    rhs: Box::from(rhs),
-                    operation: op,
-                });
-            }
+                _ => {
+                    if output.len() < 2 {
+                        return Err(Error::MissingOperands(op));
+                    }
+                    let rhs = output.pop().unwrap();
+                    let lhs = output.pop().unwrap();
+
+                    output.push(Node::Binary {
+                        lhs: Box::from(lhs),
+                        rhs: Box::from(rhs),
+                        operation: op,
+                    });
+                }
+            },
 
             _ => return Err(Error::UnexpectedToken(Expectation::OperatorToken, tok)),
         }
