@@ -102,13 +102,12 @@ pub enum Error {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ast::Operation::*;
+    use NumberBase::*;
+    use Token::*;
 
     #[test]
     fn scan() {
-        use crate::ast::Operation::*;
-        use NumberBase::*;
-        use Token::*;
-
         let srcs = [
             "1 + 0b10 * 0x3 / 4.2",
             "1+0b10*0x3/4.2",
@@ -129,7 +128,10 @@ mod tests {
             ];
             assert_eq!(tokens, expected);
         }
+    }
 
+    #[test]
+    fn scan_group() {
         let src = "3 * (2 + 1) / 0.5";
         let expected = vec![
             Number(Decimal, "3".to_string()),
@@ -141,6 +143,40 @@ mod tests {
             RParen,
             Operator(Divide),
             Number(Decimal, ".5".to_string()),
+        ];
+        let tokens: Vec<Token> = Scanner::new(src).collect();
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn scan_assign() {
+        let src = "name := 3 * (2 + 1) / 0.5";
+        let expected = vec![
+            Ident("name".to_string()),
+            Operator(Assign),
+            Number(Decimal, "3".to_string()),
+            Operator(Multiply),
+            LParen,
+            Number(Decimal, "2".to_string()),
+            Operator(Add),
+            Number(Decimal, "1".to_string()),
+            RParen,
+            Operator(Divide),
+            Number(Decimal, ".5".to_string()),
+        ];
+        let tokens: Vec<Token> = Scanner::new(src).collect();
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn scan_nested_assign() {
+        let src = "a := b := c";
+        let expected = vec![
+            Ident("a".to_string()),
+            Operator(Assign),
+            Ident("b".to_string()),
+            Operator(Assign),
+            Ident("c".to_string()),
         ];
         let tokens: Vec<Token> = Scanner::new(src).collect();
         assert_eq!(tokens, expected);
