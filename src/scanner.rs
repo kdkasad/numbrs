@@ -124,11 +124,11 @@ trait CharIdentExt {
 
 impl CharIdentExt for char {
     fn is_valid_ident(&self) -> bool {
-        self.is_ascii_alphanumeric()
+        self.is_ascii_alphanumeric() || *self == '_'
     }
 
     fn is_valid_ident_start(&self) -> bool {
-        self.is_ascii_alphabetic()
+        self.is_ascii_alphabetic() || *self == '_'
     }
 }
 
