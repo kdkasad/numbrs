@@ -4,11 +4,11 @@ use std::collections::HashMap;
 use thiserror::Error;
 
 pub trait Eval {
-    fn eval(&self, env: &HashMap<String, d128>) -> Result<d128, NodeEvalError>;
+    fn eval(&self, env: &mut HashMap<String, d128>) -> Result<d128, NodeEvalError>;
 }
 
 impl Eval for Node {
-    fn eval(&self, env: &HashMap<String, d128>) -> Result<d128, NodeEvalError> {
+    fn eval(&self, env: &mut HashMap<String, d128>) -> Result<d128, NodeEvalError> {
         match self {
             Node::Binary { .. } => self.eval_binary_node(env),
             Node::Unary { .. } => self.eval_unary_node(env),
@@ -19,7 +19,7 @@ impl Eval for Node {
 }
 
 impl Node {
-    fn eval_variable_node(&self, env: &HashMap<String, d128>) -> Result<d128, NodeEvalError> {
+    fn eval_variable_node(&self, env: &mut HashMap<String, d128>) -> Result<d128, NodeEvalError> {
         if let Node::Variable(name) = self {
             match env.get(name) {
                 Some(value) => Ok(*value),
@@ -31,7 +31,7 @@ impl Node {
         }
     }
 
-    fn eval_binary_node(&self, env: &HashMap<String, d128>) -> Result<d128, NodeEvalError> {
+    fn eval_binary_node(&self, env: &mut HashMap<String, d128>) -> Result<d128, NodeEvalError> {
         use Operation::*;
 
         if let Node::Binary {
@@ -41,7 +41,13 @@ impl Node {
         } = self
         {
             if let Assign = operation {
-                todo!("perform variable assignment");
+                if let Node::Variable(name) = &**lhs {
+                    let rval = rhs.eval(env)?;
+                    env.insert(name.to_owned(), rval);
+                    return Ok(rval);
+                } else {
+                    return Err(NodeEvalError::InvalidLHS);
+                }
             }
 
             let lhs = lhs.eval(env)?;
@@ -67,7 +73,7 @@ impl Node {
         }
     }
 
-    fn eval_unary_node(&self, env: &HashMap<String, d128>) -> Result<d128, NodeEvalError> {
+    fn eval_unary_node(&self, env: &mut HashMap<String, d128>) -> Result<d128, NodeEvalError> {
         use Operation::*;
 
         if let Node::Unary { operation, expr } = self {
@@ -93,6 +99,9 @@ impl Node {
 pub enum NodeEvalError {
     #[error("invalid operation '{0:?}' for {1}")]
     InvalidNodeOperation(Operation, &'static str),
+
+    #[error("invalid LHS for assignment operator")]
+    InvalidLHS, // TODO: ideally should store the invalid node
 
     #[error("undefined variable: '{0}'")]
     UndefinedVariable(String),

@@ -18,7 +18,7 @@ const COLOR_RST: &str = "\x1b[m";
 fn main() {
     // TODO: add completion helper
     let mut rl = Editor::<()>::new();
-    let env: HashMap<String, d128> = HashMap::new();
+    let mut env: HashMap<String, d128> = HashMap::new();
 
     loop {
         match rl.readline(PROMPT) {
@@ -29,7 +29,7 @@ fn main() {
                 match p.parse() {
                     Ok(ast) => {
                         println!("{:?}", ast);
-                        match ast.eval(&env) {
+                        match ast.eval(&mut env) {
                             Ok(value) => println!("{}", value),
                             Err(e) => println!("{}Error:{} {}", COLOR_ERR, COLOR_RST, e),
                         };

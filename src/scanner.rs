@@ -21,7 +21,7 @@ impl<'a> Scanner<'a> {
     fn collect_digits(&mut self, base: NumberBase) -> String {
         let mut s = String::with_capacity(128); // assume most numbers are <128 chars
         while let Some(&c) = self.stream.peek() {
-            if c.is_digit(base as u32) || c == '.' {
+            if c.is_digit(base as u32) || (base == NumberBase::Decimal && c == '.') {
                 s.push(c);
                 self.stream.next(); // consume digit
             } else {
@@ -56,17 +56,19 @@ impl Iterator for Scanner<'_> {
                 return self.next();
             }
 
+            // operator
             if let Ok(op) = Operation::try_from(c) {
                 return Some(Token::Operator(op));
             }
 
+            // begin number
             if c == '0' {
                 if let Some(&next) = self.stream.peek() {
                     if next == 'x' || next == 'b' {
                         let base = match self.stream.next().unwrap() {
                             'b' => NumberBase::Binary,
                             'x' => NumberBase::Hexadecimal,
-                            _ => NumberBase::Decimal, // won't be reached
+                            _ => unreachable!(),
                         };
                         return Some(Token::Number(base, self.collect_digits(base)));
                     } else if next.is_digit(NumberBase::Decimal as u32) || next == '.' {
@@ -79,6 +81,7 @@ impl Iterator for Scanner<'_> {
                 }
             }
 
+            // begin decimal number
             if c.is_digit(NumberBase::Decimal as u32) || c == '.' {
                 let mut digits = self.collect_digits(NumberBase::Decimal);
                 digits.insert(0, c);
