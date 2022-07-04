@@ -33,7 +33,12 @@ impl Node {
                 Subtract => lhs - rhs,
                 Multiply => lhs * rhs,
                 Divide => lhs / rhs,
-                _ => return Err(NodeEvalError::InvalidNodeOperation(*operation, self)),
+                _ => {
+                    return Err(NodeEvalError::InvalidNodeOperation(
+                        *operation,
+                        self.variant_name(),
+                    ))
+                }
             })
         } else {
             unreachable!()
@@ -48,7 +53,12 @@ impl Node {
             Ok(match operation {
                 UnaryAdd => value,
                 UnarySubtract => -value,
-                _ => return Err(NodeEvalError::InvalidNodeOperation(*operation, self)),
+                _ => {
+                    return Err(NodeEvalError::InvalidNodeOperation(
+                        *operation,
+                        self.variant_name(),
+                    ))
+                }
             })
         } else {
             unreachable!()
@@ -57,7 +67,7 @@ impl Node {
 }
 
 #[derive(Error, Debug)]
-pub enum NodeEvalError<'a> {
-    #[error("invalid operation '{0:?}' for node {1:?}")]
-    InvalidNodeOperation(Operation, &'a Node),
+pub enum NodeEvalError {
+    #[error("invalid operation '{0:?}' for {1}")]
+    InvalidNodeOperation(Operation, &'static str),
 }

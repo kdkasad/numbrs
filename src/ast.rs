@@ -16,6 +16,16 @@ pub enum Node {
     Number(d128),
 }
 
+impl Node {
+    pub fn variant_name(&self) -> &'static str {
+        match self {
+            Node::Binary { .. } => "Node::Binary",
+            Node::Unary { .. } => "Node::Unary",
+            Node::Number(_) => "Node::Number",
+        }
+    }
+}
+
 impl From<d128> for Node {
     fn from(value: d128) -> Self {
         Node::Number(value)
