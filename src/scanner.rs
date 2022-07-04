@@ -30,6 +30,21 @@ impl<'a> Scanner<'a> {
         }
         return s;
     }
+
+    #[allow(clippy::needless_return)]
+    fn collect_ident_chars(&mut self, first_char: char) -> String {
+        let mut s = String::with_capacity(128); // assume most names are <128 chars
+        s.push(first_char);
+        while let Some(&c) = self.stream.peek() {
+            if c.is_valid_ident() {
+                s.push(c);
+                self.stream.next(); // consume char
+            } else {
+                break;
+            }
+        }
+        return s;
+    }
 }
 
 impl Iterator for Scanner<'_> {
@@ -80,6 +95,12 @@ impl Iterator for Scanner<'_> {
                         Token::Illegal(Error::IllegalInput(c))
                     });
                 }
+            }
+
+            // parse as ident token
+            if c.is_valid_ident_start() {
+                let name = self.collect_ident_chars(c);
+                return Some(Token::Ident(name));
             }
 
             Some(match c {
