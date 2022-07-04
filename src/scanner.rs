@@ -93,6 +93,21 @@ impl Iterator for Scanner<'_> {
     }
 }
 
+trait CharIdentExt {
+    fn is_valid_ident(&self) -> bool;
+    fn is_valid_ident_start(&self) -> bool;
+}
+
+impl CharIdentExt for char {
+    fn is_valid_ident(&self) -> bool {
+        self.is_ascii_alphanumeric()
+    }
+
+    fn is_valid_ident_start(&self) -> bool {
+        self.is_ascii_alphabetic()
+    }
+}
+
 #[derive(Copy, Clone, Debug, Error, PartialEq)]
 pub enum Error {
     #[error("invalid character '{0}' in input")]
