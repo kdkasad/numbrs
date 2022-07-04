@@ -1,7 +1,7 @@
 use crate::ast::{Associativity, Node, Operation};
 use crate::scanner;
-use crate::scanner::NumberBase;
-use crate::scanner::{Scanner, Token};
+use crate::scanner::Scanner;
+use crate::token::{NumberBase, Token};
 use decimal::d128;
 use std::fmt;
 use std::iter::Peekable;

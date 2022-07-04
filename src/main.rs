@@ -4,6 +4,7 @@ use rustyline::{error::ReadlineError, Editor};
 mod ast;
 mod parser;
 mod scanner;
+mod token;
 
 const PROMPT: &str = "> ";
 
