@@ -70,6 +70,18 @@ impl Iterator for Scanner<'_> {
                 return Some(Token::Number(NumberBase::Decimal, digits));
             }
 
+            // assignment operator
+            if c == ':' {
+                if let Some(&next) = self.stream.peek() {
+                    return Some(if next == '=' {
+                        self.stream.next();
+                        Token::Operator(Operation::Assign)
+                    } else {
+                        Token::Illegal(Error::IllegalInput(c))
+                    });
+                }
+            }
+
             Some(match c {
                 '(' => Token::LParen,
                 ')' => Token::RParen,
