@@ -1,7 +1,9 @@
+use crate::eval::Eval;
 use crate::parser::Parser;
 use rustyline::{error::ReadlineError, Editor};
 
 mod ast;
+mod eval;
 mod parser;
 mod scanner;
 mod token;
@@ -22,7 +24,13 @@ fn main() {
 
                 let p = Parser::new(&line);
                 match p.parse() {
-                    Ok(ast) => println!("{:?}", ast),
+                    Ok(ast) => {
+                        println!("{:?}", ast);
+                        match ast.eval() {
+                            Ok(value) => println!("{}", value),
+                            Err(e) => println!("{}Error:{} {}", COLOR_ERR, COLOR_RST, e),
+                        };
+                    }
                     Err(e) => println!("{}Error:{} {}", COLOR_ERR, COLOR_RST, e),
                 }
             }
