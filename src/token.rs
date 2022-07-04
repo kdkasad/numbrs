@@ -11,6 +11,7 @@ pub enum Token {
     RParen,
 
     Number(NumberBase, String),
+    Ident(String),
 }
 
 impl From<Operation> for Token {

@@ -56,6 +56,10 @@ impl<'a> Parser<'a> {
                     Self::handle_rparen(&mut expect, tok, &mut output, &mut opstack)?;
                 }
 
+                Ident(_) if expect == OperandToken => {
+                    Self::handle_ident(&mut expect, tok, &mut output)?;
+                }
+
                 _ => return Err(Error::UnexpectedToken(expect, tok)),
             }
         }
@@ -66,6 +70,21 @@ impl<'a> Parser<'a> {
         }
 
         Self::process_operator_stack(&mut output, &mut opstack)
+    }
+
+    fn handle_ident(expect: &mut Expectation, curtok: Token, output: &mut Vec<Node>) -> Result<()> {
+        if *expect == Expectation::OperatorToken {
+            return Err(Error::UnexpectedToken(*expect, curtok));
+        }
+
+        let name = match curtok {
+            Token::Ident(s) => s,
+            _ => return Err(Error::UnexpectedToken(*expect, curtok)),
+        };
+        output.push(Node::Variable(name));
+
+        *expect = Expectation::OperatorToken;
+        Ok(())
     }
 
     fn process_operator_stack(output: &mut Vec<Node>, opstack: &mut Vec<Token>) -> Result<Node> {

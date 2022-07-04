@@ -14,6 +14,7 @@ pub enum Node {
         expr: Box<Node>,
     },
     Number(d128),
+    Variable(String),
 }
 
 impl Node {
@@ -22,6 +23,7 @@ impl Node {
             Node::Binary { .. } => "Node::Binary",
             Node::Unary { .. } => "Node::Unary",
             Node::Number(_) => "Node::Number",
+            Node::Variable(_) => "Node::Variable",
         }
     }
 }
@@ -42,6 +44,8 @@ pub enum Operation {
     // not recognizable by scanner but used by parser
     UnaryAdd,
     UnarySubtract,
+
+    Assign, // assignment operator ':='
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -57,6 +61,7 @@ impl Operation {
             Add | Subtract => 20,
             Multiply | Divide => 40,
             UnaryAdd | UnarySubtract => 60,
+            Assign => 100,
         }
     }
 
@@ -65,6 +70,7 @@ impl Operation {
         match self {
             Add | Subtract | Multiply | Divide => Associativity::Left,
             UnaryAdd | UnarySubtract => Associativity::Left, // doesn't matter (I think)
+            Assign => Associativity::Right,                  // "a := b := c" == "a := (b := c)"
         }
     }
 }
@@ -76,10 +82,11 @@ impl fmt::Display for Operation {
             f,
             "{}",
             match self {
-                Add | UnaryAdd => '+',
-                Subtract | UnarySubtract => '-',
-                Multiply => '*',
-                Divide => '/',
+                Add | UnaryAdd => "+",
+                Subtract | UnarySubtract => "-",
+                Multiply => "*",
+                Divide => "/",
+                Assign => ":=",
             }
         )
     }
