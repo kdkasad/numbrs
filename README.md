@@ -118,3 +118,19 @@ Numbrs is inspired by <https://github.com/nkanaev/numb> and is written in Rust.
 The "numb" part comes from the original program and "rs" is the file
 extension/common abbreviation for Rust. Together, they form "numbrs" which is
 conveniently similar to the word "numbers".
+
+## Copyright
+
+Copyright (C) 2022  Kian Kasad
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, version 3 of the License.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
