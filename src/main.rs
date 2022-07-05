@@ -1,3 +1,7 @@
+extern crate decimal;
+extern crate rustyline;
+extern crate thiserror;
+
 use crate::runtime::Runtime;
 use rustyline::{error::ReadlineError, Editor};
 
