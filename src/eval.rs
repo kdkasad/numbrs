@@ -16,6 +16,8 @@
 //
 
 use crate::ast::{Node, Operation};
+use crate::bigdecimal::ToPrimitive;
+use crate::bigdecimal_helper::BigDecimalPowExt;
 use crate::textio::{COLOR_RST, COLOR_WARN};
 use bigdecimal::BigDecimal;
 use std::collections::HashMap;
@@ -102,6 +104,18 @@ impl Node {
                 Multiply => lhs * rhs,
                 Divide => lhs / rhs,
 
+                Exponent => {
+                    if !rhs.is_integer() {
+                        Err(NodeEvalError::IntegerOnlyOperation(*operation))?
+                    } else {
+                        let exp = match rhs.to_u32() {
+                            Some(val) => val,
+                            None => return Err(NodeEvalError::ParseUInt(rhs)),
+                        };
+                        lhs.pow(exp)
+                    }
+                }
+
                 Assign => unreachable!(),
 
                 UnaryAdd | UnarySubtract => {
@@ -128,7 +142,7 @@ impl Node {
             Ok(match operation {
                 UnaryAdd => value,
                 UnarySubtract => -value,
-                Add | Subtract | Multiply | Divide | Assign => {
+                Add | Subtract | Multiply | Divide | Exponent | Assign => {
                     return Err(NodeEvalError::InvalidNodeOperation(
                         *operation,
                         self.variant_name(),
@@ -155,4 +169,10 @@ pub enum NodeEvalError {
 
     #[error("can't assign special variable: '{0}'")]
     CantAssign(String),
+
+    #[error("{0:?} ({0}) operation is only supported for integers.")]
+    IntegerOnlyOperation(Operation),
+
+    #[error("failed to parse value as unsigned integer: {0}.")]
+    ParseUInt(BigDecimal),
 }

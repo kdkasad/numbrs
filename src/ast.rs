@@ -57,6 +57,7 @@ pub enum Operation {
     Subtract,
     Multiply,
     Divide,
+    Exponent,
 
     // not recognizable by scanner but used by parser
     UnaryAdd,
@@ -77,6 +78,7 @@ impl Operation {
         match self {
             Add | Subtract => 20,
             Multiply | Divide => 40,
+            Exponent => 50,
             UnaryAdd | UnarySubtract => 60,
             Assign => 100,
         }
@@ -86,6 +88,7 @@ impl Operation {
         use Operation::*;
         match self {
             Add | Subtract | Multiply | Divide => Associativity::Left,
+            Exponent => Associativity::Right,
             UnaryAdd | UnarySubtract => Associativity::Left, // doesn't matter (I think)
             Assign => Associativity::Right,                  // "a := b := c" == "a := (b := c)"
         }
@@ -104,6 +107,7 @@ impl fmt::Display for Operation {
                 Multiply => "*",
                 Divide => "/",
                 Assign => ":=",
+                Exponent => "^",
             }
         )
     }
@@ -118,6 +122,7 @@ impl TryFrom<char> for Operation {
             '-' => Ok(Subtract),
             '*' => Ok(Multiply),
             '/' => Ok(Divide),
+            '^' => Ok(Exponent),
             _ => Err(OperationError::Parse(c)),
         }
     }
