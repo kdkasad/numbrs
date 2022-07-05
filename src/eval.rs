@@ -1,4 +1,5 @@
 use crate::ast::{Node, Operation};
+use crate::textio::{COLOR_RST, COLOR_WARN};
 use bigdecimal::BigDecimal;
 use std::collections::HashMap;
 use thiserror::Error;
@@ -48,6 +49,26 @@ impl Node {
         {
             if let Assign = operation {
                 if let Node::Variable(name) = &**lhs {
+                    if name == "_" {
+                        return Err(NodeEvalError::CantAssign(name.to_owned()));
+                    }
+
+                    if let Node::Variable(rname) = &**rhs {
+                        if rname == "_" {
+                            if env.remove(name).is_none() {
+                                // I don't like printing from a library module but I don't see a
+                                // better way to implement this:
+                                eprintln!(
+                                    "{}Warning:{} variable '{}' is not defined.",
+                                    COLOR_WARN, COLOR_RST, name
+                                );
+                            }
+                            // TODO: rework structure so control flow continues to the evaluation
+                            // below
+                            return rhs.eval(env);
+                        }
+                    }
+
                     let rval = rhs.eval(env)?;
                     env.insert(name.to_owned(), rval.to_owned());
                     return Ok(rval);
@@ -114,4 +135,7 @@ pub enum NodeEvalError {
 
     #[error("undefined variable: '{0}'")]
     UndefinedVariable(String),
+
+    #[error("can't assign special variable: '{0}'")]
+    CantAssign(String),
 }

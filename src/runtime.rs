@@ -12,9 +12,9 @@ pub struct Runtime {
 
 impl Runtime {
     pub fn new() -> Self {
-        Self {
-            env: HashMap::new(),
-        }
+        let mut env = HashMap::new();
+        env.insert("_".to_string(), bigdec!(0));
+        Self { env }
     }
 
     pub fn evaluate(&mut self, input: &str) -> Result<BigDecimal, Box<dyn Error>> {
