@@ -1,4 +1,4 @@
-extern crate decimal;
+extern crate bigdecimal;
 extern crate rustyline;
 extern crate thiserror;
 
@@ -6,6 +6,8 @@ use crate::runtime::Runtime;
 use rustyline::{error::ReadlineError, Editor};
 
 mod ast;
+#[macro_use]
+mod bigdecimal_helper;
 mod eval;
 mod parser;
 mod runtime;

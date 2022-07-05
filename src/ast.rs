@@ -1,4 +1,4 @@
-use decimal::d128;
+use bigdecimal::BigDecimal;
 use std::fmt;
 use thiserror::Error;
 
@@ -13,7 +13,7 @@ pub enum Node {
         operation: Operation,
         expr: Box<Node>,
     },
-    Number(d128),
+    Number(BigDecimal),
     Variable(String),
 }
 
@@ -28,8 +28,8 @@ impl Node {
     }
 }
 
-impl From<d128> for Node {
-    fn from(value: d128) -> Self {
+impl From<BigDecimal> for Node {
+    fn from(value: BigDecimal) -> Self {
         Node::Number(value)
     }
 }

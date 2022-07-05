@@ -2,7 +2,7 @@ use crate::ast::{Associativity, Node, Operation};
 use crate::scanner;
 use crate::scanner::Scanner;
 use crate::token::{NumberBase, Token};
-use decimal::d128;
+use bigdecimal::BigDecimal;
 use std::fmt;
 use std::iter::Peekable;
 use std::str::FromStr;
@@ -242,13 +242,13 @@ impl fmt::Display for Expectation {
 }
 
 fn digits_to_node(digits: &str, base: NumberBase) -> Result<Node> {
-    let value: d128;
+    let value: BigDecimal;
     match base {
-        NumberBase::Decimal => match d128::from_str(digits) {
+        NumberBase::Decimal => match BigDecimal::from_str(digits) {
             Ok(n) => value = n,
             Err(_) => return Err(Error::ParseDecimal(digits.to_owned())),
         },
-        _ => value = d128::from(u64::from_str_radix(digits, base as u32)?),
+        _ => value = BigDecimal::from(u64::from_str_radix(digits, base as u32)?),
     }
 
     Ok(Node::from(value))
@@ -288,9 +288,9 @@ mod tests {
     #[test]
     fn parse_numbers() {
         let cases = [
-            ("deadbeef", NumberBase::Hexadecimal, d128!(3735928559)),
-            ("1.2345", NumberBase::Decimal, d128!(1.2345)),
-            ("00101010011010", NumberBase::Binary, d128!(2714)),
+            ("deadbeef", NumberBase::Hexadecimal, bigdec!(3735928559)),
+            ("1.2345", NumberBase::Decimal, bigdec!(1.2345)),
+            ("00101010011010", NumberBase::Binary, bigdec!(2714)),
         ];
         for case in cases {
             assert_eq!(digits_to_node(case.0, case.1).unwrap(), Node::from(case.2));

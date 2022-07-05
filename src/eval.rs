@@ -1,28 +1,31 @@
 use crate::ast::{Node, Operation};
-use decimal::d128;
+use bigdecimal::BigDecimal;
 use std::collections::HashMap;
 use thiserror::Error;
 
 pub trait Eval {
-    fn eval(&self, env: &mut HashMap<String, d128>) -> Result<d128, NodeEvalError>;
+    fn eval(&self, env: &mut HashMap<String, BigDecimal>) -> Result<BigDecimal, NodeEvalError>;
 }
 
 impl Eval for Node {
-    fn eval(&self, env: &mut HashMap<String, d128>) -> Result<d128, NodeEvalError> {
+    fn eval(&self, env: &mut HashMap<String, BigDecimal>) -> Result<BigDecimal, NodeEvalError> {
         match self {
             Node::Binary { .. } => self.eval_binary_node(env),
             Node::Unary { .. } => self.eval_unary_node(env),
-            Node::Number(value) => Ok(*value),
+            Node::Number(value) => Ok(value.to_owned()),
             Node::Variable(_) => self.eval_variable_node(env),
         }
     }
 }
 
 impl Node {
-    fn eval_variable_node(&self, env: &mut HashMap<String, d128>) -> Result<d128, NodeEvalError> {
+    fn eval_variable_node(
+        &self,
+        env: &mut HashMap<String, BigDecimal>,
+    ) -> Result<BigDecimal, NodeEvalError> {
         if let Node::Variable(name) = self {
             match env.get(name) {
-                Some(value) => Ok(*value),
+                Some(value) => Ok(value.to_owned()),
                 None => Err(NodeEvalError::UndefinedVariable(name.to_owned())),
             }
         } else {
@@ -31,7 +34,10 @@ impl Node {
         }
     }
 
-    fn eval_binary_node(&self, env: &mut HashMap<String, d128>) -> Result<d128, NodeEvalError> {
+    fn eval_binary_node(
+        &self,
+        env: &mut HashMap<String, BigDecimal>,
+    ) -> Result<BigDecimal, NodeEvalError> {
         use Operation::*;
 
         if let Node::Binary {
@@ -43,7 +49,7 @@ impl Node {
             if let Assign = operation {
                 if let Node::Variable(name) = &**lhs {
                     let rval = rhs.eval(env)?;
-                    env.insert(name.to_owned(), rval);
+                    env.insert(name.to_owned(), rval.to_owned());
                     return Ok(rval);
                 } else {
                     return Err(NodeEvalError::InvalidLHS);
@@ -73,7 +79,10 @@ impl Node {
         }
     }
 
-    fn eval_unary_node(&self, env: &mut HashMap<String, d128>) -> Result<d128, NodeEvalError> {
+    fn eval_unary_node(
+        &self,
+        env: &mut HashMap<String, BigDecimal>,
+    ) -> Result<BigDecimal, NodeEvalError> {
         use Operation::*;
 
         if let Node::Unary { operation, expr } = self {

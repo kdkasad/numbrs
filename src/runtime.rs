@@ -1,13 +1,13 @@
 use crate::eval::Eval;
 use crate::parser::Parser;
 use crate::{eval, parser};
-use decimal::d128;
+use bigdecimal::BigDecimal;
 use std::collections::HashMap;
 use std::error::Error;
 use thiserror::Error;
 
 pub struct Runtime {
-    env: HashMap<String, d128>,
+    env: HashMap<String, BigDecimal>,
 }
 
 impl Runtime {
@@ -17,7 +17,7 @@ impl Runtime {
         }
     }
 
-    pub fn evaluate(&mut self, input: &str) -> Result<d128, Box<dyn Error>> {
+    pub fn evaluate(&mut self, input: &str) -> Result<BigDecimal, Box<dyn Error>> {
         let value = Parser::new(input).parse()?.eval(&mut self.env)?;
         Ok(value)
     }
