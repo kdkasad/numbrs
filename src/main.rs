@@ -3,6 +3,7 @@ extern crate rustyline;
 extern crate thiserror;
 
 use crate::runtime::Runtime;
+use crate::textio::{COLOR_ERR, COLOR_RST, COLOR_WARN, PROMPT};
 use rustyline::{error::ReadlineError, Editor};
 
 mod ast;
@@ -14,10 +15,13 @@ mod runtime;
 mod scanner;
 mod token;
 
-const PROMPT: &str = "> ";
+mod textio {
+    pub const PROMPT: &str = "> ";
 
-const COLOR_ERR: &str = "\x1b[1;31m";
-const COLOR_RST: &str = "\x1b[m";
+    pub const COLOR_ERR: &str = "\x1b[1;31m";
+    pub const COLOR_WARN: &str = "\x1b[1;33m";
+    pub const COLOR_RST: &str = "\x1b[m";
+}
 
 fn main() {
     // TODO: add completion helper
@@ -31,7 +35,7 @@ fn main() {
 
                 match rt.evaluate(&line) {
                     Ok(value) => println!("{}", value),
-                    Err(e) => println!("{}Error:{} {}", COLOR_ERR, COLOR_RST, e),
+                    Err(e) => eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, e),
                 }
             }
 
@@ -40,7 +44,7 @@ fn main() {
             }
 
             Err(ReadlineError::Interrupted) => {
-                println!("Interrupted");
+                eprintln!("{}Warning:{} process interrupted.", COLOR_WARN, COLOR_RST);
                 break;
             }
             Err(e) => {
