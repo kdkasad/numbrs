@@ -147,7 +147,7 @@ pub enum NodeEvalError {
     #[error("invalid operation '{0:?}' for {1}")]
     InvalidNodeOperation(Operation, &'static str),
 
-    #[error("invalid LHS for assignment operator")]
+    #[error("invalid LHS for assignment operator. Can only assign to variables.")]
     InvalidLHS, // TODO: ideally should store the invalid node
 
     #[error("undefined variable: '{0}'")]
