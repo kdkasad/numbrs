@@ -31,6 +31,10 @@ fn main() {
     loop {
         match rl.readline(PROMPT) {
             Ok(line) => {
+                if line == "q" || line == "quit" || line == "exit" {
+                    break;
+                }
+
                 rl.add_history_entry(&line);
 
                 match rt.evaluate(&line) {
