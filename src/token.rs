@@ -53,7 +53,7 @@ impl fmt::Display for NumberBase {
             match self {
                 Binary => "binary",
                 Decimal => "decimal",
-                Hexadecimal => "Hexadecimal",
+                Hexadecimal => "hexadecimal",
             },
             *self as u32
         )
