@@ -181,3 +181,57 @@ pub enum NodeEvalError {
     #[error("failed to parse value as unsigned integer: {0}.")]
     ParseUInt(BigDecimal),
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn node_operation_validation() {
+        macro_rules! case {
+            ( $a:ident, $b:ident, $c:expr ) => {
+                (
+                    if stringify!($a) == "Unary" {
+                        Node::Unary {
+                            operation: Operation::$b,
+                            expr: Box::new(Node::Number(bigdec!(1))),
+                        }
+                    } else if stringify!($a) == "Binary" {
+                        Node::Binary {
+                            operation: Operation::$b,
+                            lhs: Box::new(Node::Number(bigdec!(1))),
+                            rhs: Box::new(Node::Number(bigdec!(1))),
+                        }
+                    } else {
+                        panic!("Invalid argument to case!(..) macro");
+                    },
+                    $c,
+                )
+            };
+        }
+        let cases = [
+            // (node type, operation, should succeed)
+            case!(Binary, Add, true),
+            case!(Binary, Subtract, true),
+            case!(Binary, Divide, true),
+            case!(Binary, Multiply, true),
+            case!(Binary, Assign, true),
+            case!(Unary, Add, false),
+            case!(Unary, Subtract, false),
+            case!(Unary, Divide, false),
+            case!(Unary, Multiply, false),
+            case!(Unary, Assign, false),
+            case!(Binary, UnaryAdd, false),
+            case!(Binary, UnarySubtract, false),
+            case!(Unary, UnaryAdd, true),
+            case!(Unary, UnarySubtract, true),
+        ];
+        let mut env = HashMap::new();
+        for (node, should_succeed) in cases {
+            let res = node.eval(&mut env);
+            let failed = matches!(res, Err(NodeEvalError::InvalidNodeOperation(..)));
+            dbg!(node, should_succeed);
+            assert_ne!(should_succeed, failed);
+        }
+    }
+}
