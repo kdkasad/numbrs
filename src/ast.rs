@@ -80,7 +80,7 @@ impl Operation {
             Multiply | Divide => 40,
             Exponent => 50,
             UnaryAdd | UnarySubtract => 60,
-            Assign => 100,
+            Assign => 10,
         }
     }
 
