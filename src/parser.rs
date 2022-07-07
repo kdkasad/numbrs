@@ -317,25 +317,6 @@ mod tests {
     }
 
     #[test]
-    fn invalid_number_literals() {
-        let cases = [
-            ("0xwrong", IntErrorKind::InvalidDigit),
-            ("0b123", IntErrorKind::InvalidDigit),
-            ("0x", IntErrorKind::Empty),
-            ("0b", IntErrorKind::Empty),
-        ];
-        for (input, kind) in cases {
-            let err = Parser::new(input)
-                .parse()
-                .expect_err("expected error parsing invalid number literal");
-            match err {
-                Error::ParseInt(internalerr) => assert_eq!(*internalerr.kind(), kind),
-                _ => panic!("Expected type crate::parser::Error::ParseInt(..)"),
-            }
-        }
-    }
-
-    #[test]
     fn parse_mega_expression() {
         use crate::ast::Node::*;
         use crate::ast::Operation::*;

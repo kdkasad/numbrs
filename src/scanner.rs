@@ -35,17 +35,100 @@ impl<'a> Scanner<'a> {
     }
 
     #[allow(clippy::needless_return)]
-    fn collect_digits(&mut self, base: NumberBase) -> String {
+    fn collect_nondecimal_digits(&mut self, base: NumberBase) -> Result<String, Error> {
         let mut s = String::with_capacity(128); // assume most numbers are <128 chars
         while let Some(&c) = self.stream.peek() {
-            if c.is_ascii_alphanumeric() || (base == NumberBase::Decimal && c == '.') {
+            // Don't collect leading zeroes
+            if c == '0' && s.is_empty() {
+                self.stream.next(); // consume zero
+                match self.stream.peek() {
+                    Some(&c) if c.is_ascii_alphanumeric() => continue,
+                    Some(_) | None => {
+                        // If the zero is the last digit in the literal, keep it
+                        return Ok("0".to_string());
+                    }
+                }
+            }
+
+            if c.is_ascii_alphanumeric() {
+                if !c.is_digit(base as u32) {
+                    return Err(Error::InvalidDigit(base, c));
+                }
                 s.push(c);
                 self.stream.next(); // consume digit
             } else {
                 break;
             }
         }
-        return s;
+
+        if s.is_empty() {
+            Err(Error::EmptyNumberLiteral)
+        } else {
+            Ok(s)
+        }
+    }
+
+    #[allow(clippy::needless_return)]
+    fn collect_decimal_digits(&mut self, start: char) -> Result<String, Error> {
+        let mut s = String::with_capacity(128); // assume most numbers are <128 chars
+        s.push(start);
+
+        let mut frac = start == '.';
+
+        // True if literal is in scientific notation. Gets set once the 'e' is encountered,
+        // meaning we are scanning the exponent.
+        let mut scientific = false;
+
+        while let Some(&c) = self.stream.peek() {
+            // Ignore leading zeroes in integer component
+            if c == '0' && s.is_empty() && !frac {
+                self.stream.next(); // consume zero
+                match self.stream.peek() {
+                    Some(&c) if !frac && c == '.' => {
+                        self.stream.next(); // consume '.'
+                        let post = self.collect_decimal_digits(c)?;
+                        if post.is_empty() {
+                            // The literal is a zero ending in a decimal point
+                            return Ok("0".to_owned());
+                        } else {
+                            return Ok(post);
+                        }
+                    }
+                    Some(&c) if c.is_ascii_alphanumeric() => continue,
+                    Some(_) | None => return Ok("0".to_owned()), // is literal '0'
+                }
+            }
+
+            if c.is_ascii_digit() || c == '.' {
+                if c == '.' {
+                    if scientific {
+                        return Err(Error::FractionalExponent);
+                    }
+                    if frac {
+                        return Err(Error::MultipleDecimalPoints);
+                    } else {
+                        frac = true;
+                    }
+                }
+                s.push(c);
+                self.stream.next(); // consume digit
+            } else if c == 'e' {
+                self.stream.next(); // consume digit
+                if scientific {
+                    return Err(Error::InvalidDigit(NumberBase::Decimal, c));
+                }
+                s.push(c);
+                scientific = true;
+            } else {
+                break;
+            }
+        }
+
+        if s.is_empty() || s == "." {
+            Err(Error::EmptyNumberLiteral)
+        } else {
+            Ok(s)
+        }
     }
 
     #[allow(clippy::needless_return)]
@@ -87,7 +170,10 @@ impl Iterator for Scanner<'_> {
                             'x' => NumberBase::Hexadecimal,
                             _ => unreachable!(),
                         };
-                        return Some(Token::Number(base, self.collect_digits(base)));
+                        return Some(match self.collect_nondecimal_digits(base) {
+                            Ok(digits) => Token::Number(base, digits),
+                            Err(err) => Token::Illegal(err),
+                        });
                     } else if next.is_digit(NumberBase::Decimal as u32) || next == '.' {
                         // since leading zeroes don't matter, we can consume
                         // this one and continue scanning at the next digit.
@@ -100,9 +186,10 @@ impl Iterator for Scanner<'_> {
 
             // begin decimal number
             if c.is_digit(NumberBase::Decimal as u32) || c == '.' {
-                let mut digits = self.collect_digits(NumberBase::Decimal);
-                digits.insert(0, c);
-                return Some(Token::Number(NumberBase::Decimal, digits));
+                return Some(match self.collect_decimal_digits(c) {
+                    Ok(digits) => Token::Number(NumberBase::Decimal, digits),
+                    Err(err) => Token::Illegal(err),
+                });
             }
 
             // assignment operator
@@ -153,6 +240,18 @@ impl CharIdentExt for char {
 pub enum Error {
     #[error("invalid character '{0}' in input")]
     IllegalInput(char),
+
+    #[error("invalid digit for {0} literal: '{1}'")]
+    InvalidDigit(NumberBase, char),
+
+    #[error("multiple decimal points in literal")]
+    MultipleDecimalPoints,
+
+    #[error("Fractional exponent found. Only integer exponents are supported.")]
+    FractionalExponent,
+
+    #[error("empty number literal (no digits)")]
+    EmptyNumberLiteral,
 }
 
 #[cfg(test)]
@@ -284,15 +383,93 @@ mod tests {
 
     #[test]
     fn invalid_number_literals() {
-        let src = "0xfail 0b321 0xtest+4";
-        let expected = [
-            Number(Hexadecimal, "fail".to_string()),
-            Number(Binary, "321".to_string()),
-            Number(Hexadecimal, "test".to_string()),
-            Operator(Add),
-            Number(Decimal, "4".to_string()),
+        let cases = [
+            (
+                "0xfail",
+                vec![
+                    Number(Hexadecimal, "fa".to_string()),
+                    Illegal(Error::InvalidDigit(Hexadecimal, 'i')),
+                    Ident("l".to_string()),
+                ],
+            ),
+            (
+                "0b321",
+                vec![
+                    Illegal(Error::InvalidDigit(Binary, '3')),
+                    Number(Decimal, "21".to_string()),
+                ],
+            ),
+            (
+                "0xtest",
+                vec![
+                    Illegal(Error::InvalidDigit(Hexadecimal, 't')),
+                    Ident("est".to_string()),
+                ],
+            ),
+            (
+                "0.1.2",
+                vec![
+                    Illegal(Error::MultipleDecimalPoints),
+                    Number(Decimal, ".2".to_string()),
+                ],
+            ),
+            (
+                "4.3e2.7",
+                vec![
+                    Illegal(Error::FractionalExponent),
+                    Number(Decimal, ".7".to_string()),
+                ],
+            ),
+            (
+                "0x + 1",
+                vec![
+                    Illegal(Error::EmptyNumberLiteral),
+                    Operator(Add),
+                    Number(Decimal, "1".to_string()),
+                ],
+            ),
+            (
+                "0.a",
+                vec![
+                    Number(Decimal, "0".to_string()),
+                    Illegal(Error::InvalidDigit(Decimal, 'a')),
+                ],
+            ),
+            (".", vec![Illegal(Error::EmptyNumberLiteral)]),
         ];
-        let output: Vec<Token> = Scanner::new(src).collect();
-        assert_eq!(output, expected);
+        for (input, expected) in cases {
+            let tokens: Vec<Token> = Scanner::new(input).collect();
+            assert_eq!(tokens, expected);
+        }
+    }
+
+    #[test]
+    fn valid_number_literals() {
+        let cases = [
+            ("123", Decimal, "123"),
+            ("0123", Decimal, "123"),
+            ("0000000123", Decimal, "123"),
+            ("0000000.123", Decimal, ".123"),
+            ("00000001.23", Decimal, "1.23"),
+            ("0.1", Decimal, ".1"),
+            ("0", Decimal, "0"),
+            ("0.0", Decimal, ".0"),
+            ("0.", Decimal, "0"),
+            ("0x0", Hexadecimal, "0"),
+            ("0xabc", Hexadecimal, "abc"),
+            ("0x000abc", Hexadecimal, "abc"),
+            ("0xDeA94dfC", Hexadecimal, "DeA94dfC"),
+            ("0b0", Binary, "0"),
+            ("0b101010110", Binary, "101010110"),
+            ("0b000001", Binary, "1"),
+            ("4e5", Decimal, "4e5"),
+            ("1.23e2", Decimal, "1.23e2"),
+        ];
+        for (input, e_base, e_output) in cases {
+            let tokens: Vec<Token> = Scanner::new(input).collect();
+            dbg!(input);
+            assert_eq!(tokens.len(), 1);
+            assert_eq!(tokens[0], Number(e_base, e_output.to_string()));
+        }
     }
 }
