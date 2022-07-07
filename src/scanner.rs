@@ -298,7 +298,7 @@ mod tests {
             Number(Decimal, "1".to_string()),
             RParen,
             Operator(Divide),
-            Number(Decimal, ".5".to_string()),
+            Number(Decimal, "0.5".to_string()),
         ];
         let tokens: Vec<Token> = Scanner::new(src).collect();
         assert_eq!(tokens, expected);
@@ -318,7 +318,7 @@ mod tests {
             Number(Decimal, "1".to_string()),
             RParen,
             Operator(Divide),
-            Number(Decimal, ".5".to_string()),
+            Number(Decimal, "0.5".to_string()),
         ];
         let tokens: Vec<Token> = Scanner::new(src).collect();
         assert_eq!(tokens, expected);
@@ -387,27 +387,36 @@ mod tests {
             (
                 "0.1.2",
                 vec![
+                    Number(Decimal, "0.1".to_string()),
                     Illegal(Error::MultipleDecimalPoints),
-                    Number(Decimal, ".2".to_string()),
+                    Number(Decimal, "2".to_string()),
                 ],
             ),
             (
                 "4.3e2.7",
                 vec![
+                    Number(Decimal, "4.3e2".to_string()),
                     Illegal(Error::FractionalExponent),
-                    Number(Decimal, ".7".to_string()),
+                    Number(Decimal, "7".to_string()),
                 ],
             ),
             (
                 "0.a",
                 vec![
-                    Number(Decimal, "0".to_string()),
+                    Number(Decimal, "0.".to_string()),
                     Illegal(Error::InvalidDigit(Decimal, 'a')),
                 ],
             ),
-            (".", vec![Illegal(Error::EmptyNumberLiteral)]),
+            (
+                ".",
+                vec![
+                    Number(Decimal, ".".to_string()),
+                    Illegal(Error::EmptyNumberLiteral),
+                ],
+            ),
         ];
         for (input, expected) in cases {
+            dbg!(input);
             let tokens: Vec<Token> = Scanner::new(input).collect();
             assert_eq!(tokens, expected);
         }
@@ -459,13 +468,13 @@ mod tests {
     fn valid_decimal_literals() {
         let cases = [
             ("123", Decimal, "123"),
-            ("0123", Decimal, "123"),
-            ("0000000123", Decimal, "123"),
-            ("0000000.123", Decimal, ".123"),
-            ("00000001.23", Decimal, "1.23"),
-            ("0.1", Decimal, ".1"),
+            ("0123", Decimal, "0123"),
+            ("0000000123", Decimal, "0000000123"),
+            ("0000000.123", Decimal, "0000000.123"),
+            ("00000001.23", Decimal, "00000001.23"),
+            ("0.1", Decimal, "0.1"),
             ("0", Decimal, "0"),
-            ("0.0", Decimal, ".0"),
+            ("0.0", Decimal, "0.0"),
             ("0.", Decimal, "0"),
             ("4e5", Decimal, "4e5"),
             ("1.23e2", Decimal, "1.23e2"),
