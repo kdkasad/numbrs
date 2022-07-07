@@ -473,8 +473,7 @@ mod tests {
         for (input, e_base, e_output) in cases {
             let tokens: Vec<Token> = Scanner::new(input).collect();
             dbg!(input);
-            assert_eq!(tokens.len(), 1);
-            assert_eq!(tokens[0], Number(e_base, e_output.to_string()));
+            assert_eq!(tokens, [Number(e_base, e_output.to_string())]);
         }
     }
 
@@ -492,8 +491,7 @@ mod tests {
         for (input, e_base, e_output) in cases {
             let tokens: Vec<Token> = Scanner::new(input).collect();
             dbg!(input);
-            assert_eq!(tokens.len(), 1);
-            assert_eq!(tokens[0], Number(e_base, e_output.to_string()));
+            assert_eq!(tokens, [Number(e_base, e_output.to_string())]);
         }
     }
 }
