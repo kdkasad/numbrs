@@ -38,7 +38,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(self) -> Result<Node> {
+    pub fn parse(&mut self) -> Result<Node> {
         use Expectation::*;
         use Operation::*;
         use Token::*;
@@ -47,7 +47,11 @@ impl<'a> Parser<'a> {
         let mut output: Vec<Node> = Vec::new();
         let mut opstack: Vec<Token> = Vec::new();
 
-        for tok in self.s {
+        while let Some(tok) = self.s.next() {
+            if let Some(Illegal(scanerr)) = self.s.peek() {
+                return Err(Error::Scanner(*scanerr));
+            }
+
             match tok {
                 Number(base, digits) => {
                     output.push(digits_to_node(&digits, base)?);
