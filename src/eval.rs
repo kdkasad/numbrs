@@ -23,6 +23,9 @@ use bigdecimal::BigDecimal;
 use std::collections::HashMap;
 use thiserror::Error;
 
+const PROTECTED_VARS: [&str; 1] = ["_"]; // list of variables names that can't be assigned to
+pub const UNASSIGN_IDENT: &str = "_"; // identifier used to unassign/clear variables
+
 pub trait Eval {
     fn eval(&self, env: &mut HashMap<String, BigDecimal>) -> Result<BigDecimal, NodeEvalError>;
 }
@@ -68,12 +71,14 @@ impl Node {
         {
             if let Assign = operation {
                 if let Node::Variable(name) = &**lhs {
-                    if name == "_" {
-                        return Err(NodeEvalError::CantAssign(name.to_owned()));
+                    for pvar in PROTECTED_VARS {
+                        if name == pvar {
+                            return Err(NodeEvalError::CantAssign(name.to_owned()));
+                        }
                     }
 
                     if let Node::Variable(rname) = &**rhs {
-                        if rname == "_" {
+                        if rname == UNASSIGN_IDENT {
                             if env.remove(name).is_none() {
                                 // I don't like printing from a library module but I don't see a
                                 // better way to implement this:

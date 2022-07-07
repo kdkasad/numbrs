@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-use crate::eval::Eval;
+use crate::eval::{Eval, UNASSIGN_IDENT};
 use crate::parser::Parser;
 use crate::{eval, parser};
 use bigdecimal::BigDecimal;
@@ -30,7 +30,7 @@ pub struct Runtime {
 impl Runtime {
     pub fn new() -> Self {
         let mut env = HashMap::new();
-        env.insert("_".to_string(), bigdec!(0));
+        env.insert(UNASSIGN_IDENT.to_string(), bigdec!(0));
         Self { env }
     }
 
