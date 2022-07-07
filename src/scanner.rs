@@ -159,6 +159,7 @@ pub enum Error {
 mod tests {
     use super::*;
     use crate::ast::Operation::*;
+    use pretty_assertions::assert_eq;
     use NumberBase::*;
     use Token::*;
 

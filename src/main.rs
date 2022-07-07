@@ -16,6 +16,8 @@
 //
 
 extern crate bigdecimal;
+#[cfg(test)]
+extern crate pretty_assertions;
 extern crate rustyline;
 extern crate thiserror;
 

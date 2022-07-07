@@ -187,6 +187,7 @@ mod tests {
     extern crate rand;
     use super::*;
     use bigdecimal::num_bigint::RandBigInt;
+    use pretty_assertions::{assert_eq, assert_ne};
     use rand::Rng;
 
     #[test]
