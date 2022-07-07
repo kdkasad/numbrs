@@ -254,4 +254,63 @@ mod tests {
         .unwrap();
         assert_eq!(*env.get(VARNAME).unwrap(), value);
     }
+
+    #[test]
+    fn eval_binary() {
+        let node = Node::Binary {
+            operation: Operation::Add,
+            lhs: Box::new(Node::Number(bigdec!(1))),
+            rhs: Box::new(Node::Number(bigdec!(1))),
+        };
+        let mut env = HashMap::new();
+        assert_eq!(node.eval(&mut env).unwrap(), bigdec!(2));
+    }
+
+    #[test]
+    fn eval_recursion() {
+        let node = Node::Binary {
+            operation: Operation::Add,
+            lhs: Box::new(Node::Number(bigdec!(1))),
+            rhs: Box::new(Node::Binary {
+                operation: Operation::Add,
+                lhs: Box::new(Node::Number(bigdec!(1))),
+                rhs: Box::new(Node::Number(bigdec!(1))),
+            }),
+        };
+        let mut env = HashMap::new();
+        assert_eq!(node.eval(&mut env).unwrap(), bigdec!(3));
+    }
+
+    #[test]
+    fn eval_unary() {
+        let node = Node::Unary {
+            operation: Operation::UnarySubtract,
+            expr: Box::new(Node::Number(bigdec!(0519))),
+        };
+        let mut env = HashMap::new();
+        assert_eq!(node.eval(&mut env).unwrap(), bigdec!(-519));
+    }
+
+    #[test]
+    fn eval_variable() {
+        let mut env = HashMap::from([("foo".to_string(), bigdec!(2980))]);
+        let node = Node::Variable("foo".to_string());
+        assert_eq!(node.eval(&mut env).unwrap(), bigdec!(2980));
+    }
+
+    #[test]
+    fn assign_protected() {
+        for var in PROTECTED_VARS {
+            let mut env = HashMap::from([(var.to_string(), bigdec!(0))]);
+            let node = Node::Binary {
+                operation: Operation::Assign,
+                lhs: Box::new(Node::Variable(var.to_string())),
+                rhs: Box::new(Node::Number(bigdec!(123))),
+            };
+            match node.eval(&mut env).unwrap_err() {
+                NodeEvalError::CantAssign(name) => assert_eq!(name, var),
+                other => panic!("expected NodeEvalError::CantAssign(..), got {:?}", other),
+            }
+        }
+    }
 }
