@@ -163,7 +163,7 @@ mod tests {
     use Token::*;
 
     #[test]
-    fn scan() {
+    fn scan_varying_whitespace() {
         let srcs = [
             "1 + 0b10 * 0x3 / 4.2",
             "1+0b10*0x3/4.2",
@@ -236,5 +236,61 @@ mod tests {
         ];
         let tokens: Vec<Token> = Scanner::new(src).collect();
         assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn scan_operators() {
+        let src = "+ - * / ^ :=";
+        let expected = [
+            Operator(Add),
+            Operator(Subtract),
+            Operator(Multiply),
+            Operator(Divide),
+            Operator(Exponent),
+            Operator(Assign),
+        ];
+        let output: Vec<Token> = Scanner::new(src).collect();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn scan_idents() {
+        let src = "this is a _test";
+        let expected = [
+            Ident("this".to_string()),
+            Ident("is".to_string()),
+            Ident("a".to_string()),
+            Ident("_test".to_string()),
+        ];
+        let output: Vec<Token> = Scanner::new(src).collect();
+        assert_eq!(output, expected);
+
+        let src = "th|s ha$ inv@lid characters";
+        let expected = [
+            Ident("th".to_string()),
+            Illegal(Error::IllegalInput('|')),
+            Ident("s".to_string()),
+            Ident("ha".to_string()),
+            Illegal(Error::IllegalInput('$')),
+            Ident("inv".to_string()),
+            Illegal(Error::IllegalInput('@')),
+            Ident("lid".to_string()),
+            Ident("characters".to_string()),
+        ];
+        let output: Vec<Token> = Scanner::new(src).collect();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn invalid_number_literals() {
+        let src = "0xfail 0b321";
+        let expected = [
+            Number(Hexadecimal, "fa".to_string()),
+            Ident("il".to_string()),
+            Number(Binary, "".to_string()),
+            Number(Decimal, "321".to_string()),
+        ];
+        let output: Vec<Token> = Scanner::new(src).collect();
+        assert_eq!(output, expected);
     }
 }
