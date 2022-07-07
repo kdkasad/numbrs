@@ -333,4 +333,49 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn parse_mega_expression() {
+        use crate::ast::Node::*;
+        use crate::ast::Operation::*;
+
+        let input = "a := (b := _) + 1 + 0b00000010 - 3.14159 ^ 2 ^ 3 * -0x123456789abcdef";
+        let expected = Binary {
+            operation: Assign,
+            lhs: Box::new(Variable("a".to_string())),
+            rhs: Box::new(Binary {
+                operation: Subtract,
+                lhs: Box::new(Binary {
+                    operation: Add,
+                    lhs: Box::new(Binary {
+                        operation: Add,
+                        lhs: Box::new(Binary {
+                            operation: Assign,
+                            lhs: Box::new(Variable("b".to_string())),
+                            rhs: Box::new(Variable("_".to_string())),
+                        }),
+                        rhs: Box::new(Number(bigdec!(1))),
+                    }),
+                    rhs: Box::new(Number(bigdec!(2))),
+                }),
+                rhs: Box::new(Binary {
+                    operation: Multiply,
+                    lhs: Box::new(Binary {
+                        operation: Exponent,
+                        lhs: Box::new(Number(bigdec!(3.14159))),
+                        rhs: Box::new(Binary {
+                            operation: Exponent,
+                            lhs: Box::new(Number(bigdec!(2))),
+                            rhs: Box::new(Number(bigdec!(3))),
+                        }),
+                    }),
+                    rhs: Box::new(Unary {
+                        operation: UnarySubtract,
+                        expr: Box::new(Number(bigdec!(81985529216486895))),
+                    }),
+                }),
+            }),
+        };
+        assert_eq!(Parser::new(input).parse().unwrap(), expected);
+    }
 }
