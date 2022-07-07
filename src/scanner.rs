@@ -283,12 +283,13 @@ mod tests {
 
     #[test]
     fn invalid_number_literals() {
-        let src = "0xfail 0b321";
+        let src = "0xfail 0b321 0xtest+4";
         let expected = [
-            Number(Hexadecimal, "fa".to_string()),
-            Ident("il".to_string()),
-            Number(Binary, "".to_string()),
-            Number(Decimal, "321".to_string()),
+            Number(Hexadecimal, "fail".to_string()),
+            Number(Binary, "321".to_string()),
+            Number(Hexadecimal, "test".to_string()),
+            Operator(Add),
+            Number(Decimal, "4".to_string()),
         ];
         let output: Vec<Token> = Scanner::new(src).collect();
         assert_eq!(output, expected);

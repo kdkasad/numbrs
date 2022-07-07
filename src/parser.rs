@@ -301,6 +301,7 @@ pub enum Error {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::num::IntErrorKind;
 
     #[test]
     fn parse_numbers() {
@@ -309,8 +310,27 @@ mod tests {
             ("1.2345", NumberBase::Decimal, bigdec!(1.2345)),
             ("00101010011010", NumberBase::Binary, bigdec!(2714)),
         ];
-        for case in cases {
-            assert_eq!(digits_to_node(case.0, case.1).unwrap(), Node::from(case.2));
+        for (digits, base, value) in cases {
+            assert_eq!(digits_to_node(digits, base).unwrap(), Node::from(value));
+        }
+    }
+
+    #[test]
+    fn invalid_number_literals() {
+        let cases = [
+            ("0xwrong", IntErrorKind::InvalidDigit),
+            ("0b123", IntErrorKind::InvalidDigit),
+            ("0x", IntErrorKind::Empty),
+            ("0b", IntErrorKind::Empty),
+        ];
+        for (input, kind) in cases {
+            let err = Parser::new(input)
+                .parse()
+                .expect_err("expected error parsing invalid number literal");
+            match err {
+                Error::ParseInt(internalerr) => assert_eq!(*internalerr.kind(), kind),
+                _ => panic!("Expected type crate::parser::Error::ParseInt(..)"),
+            }
         }
     }
 }
