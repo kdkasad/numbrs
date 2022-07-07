@@ -1,7 +1,6 @@
 - Units / conversions
 - Functions
 - Bitwise operations for integers
-- Add more tests
 - Scientific notation literals
 - User-specified output formatting
 - Display copyright/license info in REPL
