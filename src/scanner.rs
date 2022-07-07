@@ -106,6 +106,13 @@ impl<'a> Scanner<'a> {
                 } else if (c == 'e' || c == 'E') && !sci {
                     sci = true;
                     s.push('e');
+                    if let Some(&next) = self.stream.peek() {
+                        if !next.is_ascii_digit() {
+                            return (s, Some(Error::EmptyNumberLiteral));
+                        }
+                    } else {
+                        return (s, Some(Error::EmptyNumberLiteral));
+                    }
                 } else {
                     return (s, Some(Error::InvalidDigit(NumberBase::Decimal, c)));
                 }
@@ -410,6 +417,13 @@ mod tests {
                 ".",
                 vec![
                     Number(Decimal, ".".to_string()),
+                    Illegal(Error::EmptyNumberLiteral),
+                ],
+            ),
+            (
+                "4.6e",
+                vec![
+                    Number(Decimal, "4.6e".to_string()),
                     Illegal(Error::EmptyNumberLiteral),
                 ],
             ),
