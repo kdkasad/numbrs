@@ -27,3 +27,5 @@ rustyline = "9.1.2"
 
 [dev-dependencies]
 pretty_assertions = "1.2.1"
+num-bigint = { version = "0.4.3", features = ["rand"] }
+rand = "0.8.5"

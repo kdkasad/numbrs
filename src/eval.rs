@@ -184,7 +184,10 @@ pub enum NodeEvalError {
 
 #[cfg(test)]
 mod tests {
+    extern crate rand;
     use super::*;
+    use bigdecimal::num_bigint::RandBigInt;
+    use rand::Rng;
 
     #[test]
     fn node_operation_validation() {
@@ -233,5 +236,21 @@ mod tests {
             dbg!(node, should_succeed);
             assert_ne!(should_succeed, failed);
         }
+    }
+
+    #[test]
+    fn test_assignment() {
+        const VARNAME: &str = "test";
+        let mut env = HashMap::new();
+        assert!(matches!(env.get(VARNAME), None));
+        let value = BigDecimal::new(rand::thread_rng().gen_bigint(5), rand::thread_rng().gen());
+        Node::Binary {
+            operation: Operation::Assign,
+            lhs: Box::new(Node::Variable(VARNAME.to_string())),
+            rhs: Box::new(Node::Number(value.to_owned())),
+        }
+        .eval(&mut env)
+        .unwrap();
+        assert_eq!(*env.get(VARNAME).unwrap(), value);
     }
 }
