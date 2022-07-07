@@ -425,25 +425,31 @@ mod tests {
                 ],
             ),
             (
-                "0b321",
+                "0b3",
                 vec![
+                    Number(Binary, "".to_string()),
                     Illegal(Error::InvalidDigit(Binary, '3')),
-                    Number(Decimal, "21".to_string()),
                 ],
             ),
             (
                 "0xtest",
                 vec![
+                    Number(Hexadecimal, "".to_string()),
                     Illegal(Error::InvalidDigit(Hexadecimal, 't')),
                     Ident("est".to_string()),
                 ],
             ),
             (
                 "0x +",
-                vec![Illegal(Error::EmptyNumberLiteral), Operator(Add)],
+                vec![
+                    Number(Hexadecimal, "".to_string()),
+                    Illegal(Error::EmptyNumberLiteral),
+                    Operator(Add),
+                ],
             ),
         ];
         for (input, expected) in cases {
+            dbg!(input);
             let tokens: Vec<Token> = Scanner::new(input).collect();
             assert_eq!(tokens, expected);
         }
