@@ -382,7 +382,39 @@ mod tests {
     }
 
     #[test]
-    fn invalid_number_literals() {
+    fn invalid_decimal_literals() {
+        let cases = [
+            (
+                "0.1.2",
+                vec![
+                    Illegal(Error::MultipleDecimalPoints),
+                    Number(Decimal, ".2".to_string()),
+                ],
+            ),
+            (
+                "4.3e2.7",
+                vec![
+                    Illegal(Error::FractionalExponent),
+                    Number(Decimal, ".7".to_string()),
+                ],
+            ),
+            (
+                "0.a",
+                vec![
+                    Number(Decimal, "0".to_string()),
+                    Illegal(Error::InvalidDigit(Decimal, 'a')),
+                ],
+            ),
+            (".", vec![Illegal(Error::EmptyNumberLiteral)]),
+        ];
+        for (input, expected) in cases {
+            let tokens: Vec<Token> = Scanner::new(input).collect();
+            assert_eq!(tokens, expected);
+        }
+    }
+
+    #[test]
+    fn invalid_nondecimal_literals() {
         let cases = [
             (
                 "0xfail",
@@ -407,35 +439,9 @@ mod tests {
                 ],
             ),
             (
-                "0.1.2",
-                vec![
-                    Illegal(Error::MultipleDecimalPoints),
-                    Number(Decimal, ".2".to_string()),
-                ],
+                "0x +",
+                vec![Illegal(Error::EmptyNumberLiteral), Operator(Add)],
             ),
-            (
-                "4.3e2.7",
-                vec![
-                    Illegal(Error::FractionalExponent),
-                    Number(Decimal, ".7".to_string()),
-                ],
-            ),
-            (
-                "0x + 1",
-                vec![
-                    Illegal(Error::EmptyNumberLiteral),
-                    Operator(Add),
-                    Number(Decimal, "1".to_string()),
-                ],
-            ),
-            (
-                "0.a",
-                vec![
-                    Number(Decimal, "0".to_string()),
-                    Illegal(Error::InvalidDigit(Decimal, 'a')),
-                ],
-            ),
-            (".", vec![Illegal(Error::EmptyNumberLiteral)]),
         ];
         for (input, expected) in cases {
             let tokens: Vec<Token> = Scanner::new(input).collect();
@@ -444,7 +450,7 @@ mod tests {
     }
 
     #[test]
-    fn valid_number_literals() {
+    fn valid_decimal_literals() {
         let cases = [
             ("123", Decimal, "123"),
             ("0123", Decimal, "123"),
@@ -455,6 +461,20 @@ mod tests {
             ("0", Decimal, "0"),
             ("0.0", Decimal, ".0"),
             ("0.", Decimal, "0"),
+            ("4e5", Decimal, "4e5"),
+            ("1.23e2", Decimal, "1.23e2"),
+        ];
+        for (input, e_base, e_output) in cases {
+            let tokens: Vec<Token> = Scanner::new(input).collect();
+            dbg!(input);
+            assert_eq!(tokens.len(), 1);
+            assert_eq!(tokens[0], Number(e_base, e_output.to_string()));
+        }
+    }
+
+    #[test]
+    fn valid_nondecimal_literals() {
+        let cases = [
             ("0x0", Hexadecimal, "0"),
             ("0xabc", Hexadecimal, "abc"),
             ("0x000abc", Hexadecimal, "abc"),
@@ -462,8 +482,6 @@ mod tests {
             ("0b0", Binary, "0"),
             ("0b101010110", Binary, "101010110"),
             ("0b000001", Binary, "1"),
-            ("4e5", Decimal, "4e5"),
-            ("1.23e2", Decimal, "1.23e2"),
         ];
         for (input, e_base, e_output) in cases {
             let tokens: Vec<Token> = Scanner::new(input).collect();
