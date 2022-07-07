@@ -25,109 +25,99 @@ type Stream<'a> = Peekable<Chars<'a>>;
 #[derive(Debug)]
 pub struct Scanner<'a> {
     stream: Stream<'a>,
+
+    // When parsing number literals, two tokens can be generated at once. One will be released and
+    // the other will be stored as 'next' and released on the next iteration.
+    next: Option<Token>,
 }
 
 impl<'a> Scanner<'a> {
     pub fn new(src: &'a str) -> Self {
         Self {
             stream: src.chars().peekable(),
+            next: None,
         }
     }
 
     #[allow(clippy::needless_return)]
-    fn collect_nondecimal_digits(&mut self, base: NumberBase) -> Result<String, Error> {
-        let mut s = String::with_capacity(128); // assume most numbers are <128 chars
+    fn collect_nondecimal_digits(&mut self, base: NumberBase) -> (String, Option<Error>) {
+        let mut s = String::with_capacity(128); // assume most literals are <128 chars
+
         while let Some(&c) = self.stream.peek() {
-            // Don't collect leading zeroes
             if c == '0' && s.is_empty() {
-                self.stream.next(); // consume zero
-                match self.stream.peek() {
-                    Some(&c) if c.is_ascii_alphanumeric() => continue,
-                    Some(_) | None => {
-                        // If the zero is the last digit in the literal, keep it
-                        return Ok("0".to_string());
+                // If next digit is a valid digit, ignore this zero
+                self.stream.next();
+                if let Some(&next) = self.stream.peek() {
+                    if next.is_digit(base as u32) {
+                        continue;
                     }
                 }
-            }
-
-            if c.is_ascii_alphanumeric() {
-                if !c.is_digit(base as u32) {
-                    return Err(Error::InvalidDigit(base, c));
-                }
                 s.push(c);
+                break;
+            } else if c.is_ascii_alphanumeric() {
                 self.stream.next(); // consume digit
+                if c.is_digit(base as u32) {
+                    s.push(c);
+                } else {
+                    return (s, Some(Error::InvalidDigit(base, c)));
+                }
             } else {
                 break;
             }
         }
 
         if s.is_empty() {
-            Err(Error::EmptyNumberLiteral)
+            (s, Some(Error::EmptyNumberLiteral))
         } else {
-            Ok(s)
+            (s, None)
         }
     }
 
     #[allow(clippy::needless_return)]
-    fn collect_decimal_digits(&mut self, start: char) -> Result<String, Error> {
-        let mut s = String::with_capacity(128); // assume most numbers are <128 chars
+    fn collect_decimal_digits(&mut self, start: char) -> (String, Option<Error>) {
+        let mut s = String::with_capacity(128); // assume most literals are <128 chars
         s.push(start);
 
+        // Whether or not the number is fractional
         let mut frac = start == '.';
 
-        // True if literal is in scientific notation. Gets set once the 'e' is encountered,
-        // meaning we are scanning the exponent.
-        let mut scientific = false;
+        // Whether or not the number is in scientific notation
+        let mut sci = false;
 
         while let Some(&c) = self.stream.peek() {
-            // Ignore leading zeroes in integer component
-            if c == '0' && s.is_empty() && !frac {
-                self.stream.next(); // consume zero
-                match self.stream.peek() {
-                    Some(&c) if !frac && c == '.' => {
-                        self.stream.next(); // consume '.'
-                        let post = self.collect_decimal_digits(c)?;
-                        if post.is_empty() {
-                            // The literal is a zero ending in a decimal point
-                            return Ok("0".to_owned());
-                        } else {
-                            return Ok(post);
+            if c == '.' {
+                self.stream.next(); // consume char
+                if sci {
+                    return (s, Some(Error::FractionalExponent));
+                } else if frac {
+                    return (s, Some(Error::MultipleDecimalPoints));
+                } else {
+                    frac = true;
+                    if let Some(&next) = self.stream.peek() {
+                        if next.is_ascii_alphanumeric() {
+                            s.push(c);
                         }
                     }
-                    Some(&c) if c.is_ascii_alphanumeric() => continue,
-                    Some(_) | None => return Ok("0".to_owned()), // is literal '0'
                 }
-            }
-
-            if c.is_ascii_digit() || c == '.' {
-                if c == '.' {
-                    if scientific {
-                        return Err(Error::FractionalExponent);
-                    }
-                    if frac {
-                        return Err(Error::MultipleDecimalPoints);
-                    } else {
-                        frac = true;
-                    }
+            } else if c.is_ascii_alphanumeric() {
+                self.stream.next(); // consume char
+                if c.is_ascii_digit() {
+                    s.push(c);
+                } else if (c == 'e' || c == 'E') && !sci {
+                    sci = true;
+                    s.push('e');
+                } else {
+                    return (s, Some(Error::InvalidDigit(NumberBase::Decimal, c)));
                 }
-                s.push(c);
-                self.stream.next(); // consume digit
-            } else if c == 'e' {
-                self.stream.next(); // consume digit
-                if scientific {
-                    return Err(Error::InvalidDigit(NumberBase::Decimal, c));
-                }
-                s.push(c);
-                scientific = true;
             } else {
                 break;
             }
         }
 
         if s.is_empty() || s == "." {
-            Err(Error::EmptyNumberLiteral)
+            (s, Some(Error::EmptyNumberLiteral))
         } else {
-            Ok(s)
+            (s, None)
         }
     }
 
@@ -150,6 +140,11 @@ impl<'a> Scanner<'a> {
 impl Iterator for Scanner<'_> {
     type Item = Token;
     fn next(&mut self) -> Option<<Self as Iterator>::Item> {
+        if let Some(tok) = self.next.clone() {
+            self.next = None;
+            return Some(tok);
+        }
+
         if let Some(c) = self.stream.next() {
             if c.is_whitespace() {
                 // consume whitespace and parse the next token
@@ -170,14 +165,17 @@ impl Iterator for Scanner<'_> {
                             'x' => NumberBase::Hexadecimal,
                             _ => unreachable!(),
                         };
-                        return Some(match self.collect_nondecimal_digits(base) {
-                            Ok(digits) => Token::Number(base, digits),
-                            Err(err) => Token::Illegal(err),
-                        });
+                        let (digits, fail) = self.collect_nondecimal_digits(base);
+                        if let Some(err) = fail {
+                            self.next = Some(Token::Illegal(err));
+                        }
+                        return Some(Token::Number(base, digits));
                     } else if next.is_digit(NumberBase::Decimal as u32) || next == '.' {
-                        // since leading zeroes don't matter, we can consume
-                        // this one and continue scanning at the next digit.
-                        return self.next();
+                        let (digits, fail) = self.collect_decimal_digits(c);
+                        if let Some(err) = fail {
+                            self.next = Some(Token::Illegal(err));
+                        }
+                        return Some(Token::Number(NumberBase::Decimal, digits));
                     } else {
                         return Some(Token::Number(NumberBase::Decimal, "0".to_string()));
                     }
@@ -186,10 +184,11 @@ impl Iterator for Scanner<'_> {
 
             // begin decimal number
             if c.is_digit(NumberBase::Decimal as u32) || c == '.' {
-                return Some(match self.collect_decimal_digits(c) {
-                    Ok(digits) => Token::Number(NumberBase::Decimal, digits),
-                    Err(err) => Token::Illegal(err),
-                });
+                let (digits, fail) = self.collect_decimal_digits(c);
+                if let Some(err) = fail {
+                    self.next = Some(Token::Illegal(err));
+                }
+                return Some(Token::Number(NumberBase::Decimal, digits));
             }
 
             // assignment operator
