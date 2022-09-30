@@ -30,6 +30,7 @@ extern crate pretty_assertions;
 pub mod ast;
 pub mod dimension;
 pub mod eval;
+pub mod format;
 pub mod lexer;
 pub mod operation;
 pub mod parser;
