@@ -30,3 +30,4 @@ extern crate pretty_assertions;
 pub mod dimension;
 pub mod operation;
 mod rat_util_macros;
+pub mod unit;
