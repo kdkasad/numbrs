@@ -195,6 +195,7 @@ mod tests {
             ("100 m", binexpr!(* 100 m)),
             ("10 ft + 90 m", binexpr!(+ (* 10 ft) (* 90 m))),
             ("123 kg m/s^2", binexpr!(/ (* (* 123 kg) m) (^ s 2))),
+            ("(1 + 2) * 3", binexpr!(* (+ 1 2) 3)),
         ];
 
         for (input, expected_result) in good_cases {

@@ -62,7 +62,7 @@ pub enum Token {
 }
 
 /// Input lexer. Processes input strings into token streams.
-/// 
+///
 /// See [module-level][crate::lexer] documentation for examples.
 pub struct Lexer {
     chars: Peekable<IntoIter<char>>,
@@ -159,6 +159,9 @@ mod tests {
             ( o $b:tt ) => {
                 Token::Operator(Operation::from_str(stringify!($b)).unwrap())
             };
+            ( o $b:literal ) => {
+                Token::Operator(Operation::from_str($b).unwrap())
+            };
             ( n $b:literal ) => {
                 Token::Number(stringify!($b).to_string())
             };
@@ -182,6 +185,7 @@ mod tests {
             ("snake_case", toks!(i snake_case,)),
             ("123 + ?", toks!(n 123, o +, il ?)),
             (".", toks!(il . ,)),
+            ("(1 + 2) * 3", toks!(o "(", n 1, o +, n 2, o ")", o *, n 3)),
         ];
         for (src, toks) in cases {
             let result: Vec<Token> = Lexer::new(src).collect();
