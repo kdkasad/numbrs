@@ -19,17 +19,14 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-//! Helper macros for creating [BigInt][1] and [BigRational][2] instances
+//! Helper macros for creating [BigRational][br] structs
 //!
-//! [1]: num_bigint::BigInt
-//! [2]: num_rational::BigRational
+//! [br]: num_rational::BigRational
 
-macro_rules! bigint {
-    ( $a:expr ) => {
-        num::BigInt::from($a as i64)
-    };
-}
-
+/// Create a [BigRational]
+///
+/// Takes a numerator and a denominator argument. The denominator can be omitted
+/// to create a [BigRational] that represents an integer.
 macro_rules! rat {
     ( $a:expr ) => {
         num::BigRational::from_integer(num::BigInt::from($a))
@@ -40,4 +37,4 @@ macro_rules! rat {
 }
 
 // Required to be able to import macros in other modules
-pub(crate) use {bigint, rat};
+pub(crate) use rat;
