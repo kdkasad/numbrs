@@ -27,6 +27,7 @@ extern crate thiserror;
 #[cfg(test)]
 extern crate pretty_assertions;
 
+pub mod ast;
 pub mod dimension;
 pub mod operation;
 mod rat_util_macros;
