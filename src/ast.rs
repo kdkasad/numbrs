@@ -67,12 +67,31 @@ pub struct UnaryExpression {
     pub(crate) expr: Box<Node>,
 }
 
+impl UnaryExpression {
+    pub fn new(operation: Operation, expr: Node) -> Self {
+        Self {
+            operation,
+            expr: Box::new(expr),
+        }
+    }
+}
+
 /// Expression with binary operator
 #[derive(Clone, Debug, PartialEq)]
 pub struct BinaryExpression {
     pub(crate) operation: Operation,
     pub(crate) lhs: Box<Node>,
     pub(crate) rhs: Box<Node>,
+}
+
+impl BinaryExpression {
+    pub fn new(operation: Operation, lhs: Node, rhs: Node) -> Self {
+        Self {
+            operation,
+            lhs: Box::new(lhs),
+            rhs: Box::new(rhs),
+    }
+    }
 }
 
 /// Value type
