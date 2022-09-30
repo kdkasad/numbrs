@@ -32,5 +32,6 @@ pub mod dimension;
 pub mod eval;
 pub mod lexer;
 pub mod operation;
+pub mod parser;
 mod rat_util_macros;
 pub mod unit;
