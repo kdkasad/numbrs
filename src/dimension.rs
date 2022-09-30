@@ -80,6 +80,7 @@ impl Default for Dimension {
 
 impl Mul for Dimension {
     type Output = Self;
+
     #[allow(clippy::suspicious_arithmetic_impl)]
     fn mul(self, rhs: Self) -> Self::Output {
         let mut result = Dimension::new();
@@ -101,6 +102,7 @@ impl MulAssign for Dimension {
 
 impl Index<BaseQuantity> for Dimension {
     type Output = i32;
+
     fn index(&self, index: BaseQuantity) -> &Self::Output {
         &self.0[index as usize]
     }
@@ -120,8 +122,9 @@ impl From<[i32; BaseQuantity::COUNT]> for Dimension {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use pretty_assertions::{assert_eq, assert_ne};
+
+    use super::*;
 
     /// Test multiplication of [Dimensions][Dimension]
     #[test]
