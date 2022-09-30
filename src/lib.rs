@@ -26,3 +26,5 @@ extern crate thiserror;
 
 #[cfg(test)]
 extern crate pretty_assertions;
+
+pub mod operation;
