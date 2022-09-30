@@ -90,7 +90,7 @@ impl BinaryExpression {
             operation,
             lhs: Box::new(lhs),
             rhs: Box::new(rhs),
-    }
+        }
     }
 }
 
@@ -152,8 +152,8 @@ pub enum Node {
 impl From<Value> for Node {
     fn from(value: Value) -> Node {
         match value {
-            Value::Quantity(q) => Node::Quantity(q),
-            Value::Number(n) => Node::Number(n),
+            Value::Quantity(q) => Node::from(q),
+            Value::Number(n) => Node::from(n),
         }
     }
 }
@@ -163,6 +163,21 @@ impl From<BigRational> for Node {
         Node::Number(rat)
     }
 }
+
+macro_rules! node_from_subtype {
+    ( $subtype:ident ) => {
+        impl From<$subtype> for Node {
+            fn from(src: $subtype) -> Node {
+                Node::$subtype(src)
+            }
+        }
+    };
+}
+
+node_from_subtype!(UnaryExpression);
+node_from_subtype!(BinaryExpression);
+node_from_subtype!(Variable);
+node_from_subtype!(Quantity);
 
 #[derive(Error, Debug)]
 pub enum Error {
