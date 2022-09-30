@@ -29,8 +29,13 @@ edition = "2021"
 name = "numbrs"
 path = "src/lib.rs"
 
+[[bin]]
+name = "numbrs"
+path = "src/main.rs"
+
 [dependencies]
 num = "0.4.0"
+rustyline = "10.0.0"
 strum = "0.24.1"
 strum_macros = "0.24.3"
 thiserror = "1.0.37"
