@@ -35,4 +35,5 @@ pub mod lexer;
 pub mod operation;
 pub mod parser;
 mod rat_util_macros;
+pub mod runtime;
 pub mod unit;
