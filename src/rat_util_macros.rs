@@ -1,6 +1,6 @@
 /*
 
-lib.rs - Numbrs library crate
+rat_util_macros.rs - Utility macros for rational types
 Copyright (C) 2022  Kian Kasad
 
 This file is part of Numbrs.
@@ -19,14 +19,25 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-extern crate num;
-extern crate strum;
-extern crate strum_macros;
-extern crate thiserror;
+//! Helper macros for creating [BigInt][1] and [BigRational][2] instances
+//!
+//! [1]: num_bigint::BigInt
+//! [2]: num_rational::BigRational
 
-#[cfg(test)]
-extern crate pretty_assertions;
+macro_rules! bigint {
+    ( $a:expr ) => {
+        num::BigInt::from($a as i64)
+    };
+}
 
-pub mod dimension;
-pub mod operation;
-mod rat_util_macros;
+macro_rules! rat {
+    ( $a:expr ) => {
+        num::BigRational::from_integer(num::BigInt::from($a))
+    };
+    ( $a:expr , $b:expr ) => {
+        num::BigRational::new(num::BigInt::from($a), num::BigInt::from($b))
+    };
+}
+
+// Required to be able to import macros in other modules
+pub(crate) use {bigint, rat};
