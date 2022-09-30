@@ -1,0 +1,164 @@
+/*
+
+dimension.rs - Dimension handling for Numbrs
+Copyright (C) 2022  Kian Kasad
+
+This file is part of Numbrs.
+
+Numbrs is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, version 3 of the License.
+
+Numbrs is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
+
+*/
+
+//! Dimension handling for Numbrs.
+//!
+//! Dimensions are how units map to physical quantities.
+
+use std::ops::{Index, IndexMut, Mul, MulAssign};
+
+use strum::{EnumCount, IntoEnumIterator};
+use strum_macros::{EnumCount as EnumCountMacro, EnumIter};
+
+/// Base quantity/dimension type.
+///
+/// Each variant represents a [basic physical dimension/quantity][1].
+///
+/// [1]: https://en.wikipedia.org/wiki/Physical_quantity#Dimensions
+#[derive(Clone, Copy, PartialEq, Eq, EnumCountMacro, EnumIter)]
+pub(crate) enum BaseQuantity {
+    Length,
+    Mass,
+    Time,
+}
+
+/// Dimension specifier.
+///
+/// Specifies a dimension of measure for units by storing an array of exponents
+/// indexed by base quantities.
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub(crate) struct Dimension([i32; BaseQuantity::COUNT]);
+
+impl Dimension {
+    /// Test whether the dimension is pure.
+    ///
+    /// A *pure* dimension is one with zero exponent for all base quantities. In
+    /// other words, a quantity with a pure dimension is just a numerical value.
+    pub fn is_pure(&self) -> bool {
+        self.0.iter().all(|x| *x == 0)
+    }
+
+    /// Create a new empty dimension
+    pub const fn new() -> Self {
+        Self([0; BaseQuantity::COUNT])
+    }
+
+    /// Raise a dimension to an integer power.
+    ///
+    /// Effectively multiplies each base quantity's exponent by the power.
+    pub fn pow(mut self, pow: i32) -> Self {
+        for bq in BaseQuantity::iter() {
+            self[bq] *= pow;
+        }
+        self
+    }
+}
+
+impl Default for Dimension {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Mul for Dimension {
+    type Output = Self;
+    #[allow(clippy::suspicious_arithmetic_impl)]
+    fn mul(self, rhs: Self) -> Self::Output {
+        let mut result = Dimension::new();
+        for bq in BaseQuantity::iter() {
+            result[bq] = self[bq] + rhs[bq];
+        }
+        result
+    }
+}
+
+impl MulAssign for Dimension {
+    #[allow(clippy::suspicious_op_assign_impl)]
+    fn mul_assign(&mut self, rhs: Self) {
+        for bq in BaseQuantity::iter() {
+            self[bq] += rhs[bq]
+        }
+    }
+}
+
+impl Index<BaseQuantity> for Dimension {
+    type Output = i32;
+    fn index(&self, index: BaseQuantity) -> &Self::Output {
+        &self.0[index as usize]
+    }
+}
+
+impl IndexMut<BaseQuantity> for Dimension {
+    fn index_mut(&mut self, index: BaseQuantity) -> &mut Self::Output {
+        &mut self.0[index as usize]
+    }
+}
+
+impl From<[i32; BaseQuantity::COUNT]> for Dimension {
+    fn from(src: [i32; BaseQuantity::COUNT]) -> Self {
+        Self(src)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::{assert_eq, assert_ne};
+
+    /// Test multiplication of [Dimensions][Dimension]
+    #[test]
+    fn multiplication() {
+        let a = Dimension([1, 2, 3]);
+        let b = Dimension([4, 5, 6]);
+        assert_eq!(a * b, Dimension([5, 7, 9]));
+        assert_eq!(a.0, [1, 2, 3]);
+        assert_eq!(b.0, [4, 5, 6]);
+    }
+
+    /// Test raising a [Dimension] to a power
+    #[test]
+    fn exponentiation() {
+        let a = Dimension([1, 2, 3]);
+        let pow = 4;
+        assert_eq!(a.pow(pow), Dimension([4, 8, 12]));
+        assert_eq!(a.0, [1, 2, 3]);
+    }
+
+    /// Test checking if a [Dimension] is pure
+    #[test]
+    fn purity() {
+        let dim = Dimension([0; BaseQuantity::COUNT]);
+        assert!(dim.is_pure());
+    }
+
+    /// Test equality checking for [Dimensions][Dimension]
+    #[test]
+    fn equality() {
+        let a = Dimension([1, 2, 3]);
+        let b = Dimension([1, 2, 3]);
+        let c = Dimension([4, 5, 6]);
+        let d = Dimension([3, 2, 1]);
+        assert_eq!(a, b);
+        assert_ne!(a, c);
+        assert_ne!(a, d);
+        assert_eq!(d, d);
+    }
+}
