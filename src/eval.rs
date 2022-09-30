@@ -214,9 +214,9 @@ fn bigrational_pow(lhs: BigRational, rhs: BigRational) -> Result<BigRational, Ev
 
 impl Node {
     /// Evaluate this node.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// extern crate num;
     /// use num::{BigInt, BigRational};
@@ -225,16 +225,16 @@ impl Node {
     ///     operation::Operation,
     /// };
     /// use std::collections::HashMap;
-    /// 
+    ///
     /// let tree = Node::from(BinaryExpression::new(
     ///     Operation::Multiply,
-    ///     Node::from(BigRational::from_integer(BigInt::from(2))),
-    ///     Node::from(BigRational::from_integer(BigInt::from(3)))
+    ///     Node::from(rat!(2)),
+    ///     Node::from(rat!(3))
     /// ));
     /// let env = HashMap::new();
     /// match tree.eval(&env).unwrap() {
     ///     Value::Number(rat) => {
-    ///         assert_eq!(rat, BigRational::from_integer(BigInt::from(6)))
+    ///         assert_eq!(rat, rat!(6))
     ///     }
     ///     _ => unreachable!(),
     /// }
