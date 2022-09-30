@@ -18,3 +18,11 @@ You should have received a copy of the GNU General Public License
 along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 */
+
+extern crate num;
+extern crate strum;
+extern crate strum_macros;
+extern crate thiserror;
+
+#[cfg(test)]
+extern crate pretty_assertions;
