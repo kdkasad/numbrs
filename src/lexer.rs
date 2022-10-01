@@ -108,7 +108,7 @@ impl Iterator for Lexer {
                 } else if let Ok(op) = Operation::from_str(&c.to_string()) {
                     // c is an operator character
                     // consume the character and return and operator token
-                    self.chars.next().unwrap();
+                    self.chars.next();
                     Some(Token::Operator(op))
                 } else if c.is_alphabetic() || c == '_' {
                     // c is alphabetic or underscore
@@ -116,10 +116,18 @@ impl Iterator for Lexer {
                     Some(Token::Ident(collect_chars(&mut self.chars, |c| {
                         c.is_alphabetic() || c == '_'
                     })))
+                } else if c == ':' { // check for assignment operator
+                    self.chars.next(); // consume ':'
+                    if let Some('=') = self.chars.peek() {
+                        self.chars.next(); // consume '='
+                        Some(Token::Operator(Operation::Assign))
+                    } else {
+                        Some(Token::Illegal(c))
+                    }
                 } else {
                     // unrecognized character
                     // consume the character and return an illegal token
-                    self.chars.next().unwrap();
+                    self.chars.next();
                     Some(Token::Illegal(c))
                 }
             }
@@ -168,9 +176,6 @@ mod tests {
     #[test]
     fn tokenize() {
         macro_rules! toks {
-            ( o $b:tt ) => {
-                Token::Operator(Operation::from_str(stringify!($b)).unwrap())
-            };
             ( o $b:literal ) => {
                 Token::Operator(Operation::from_str($b).unwrap())
             };
@@ -191,17 +196,23 @@ mod tests {
         }
         let cases: Vec<(&'static str, Vec<Token>)> = vec![
             ("1 2 3", toks!(n 1, n 2, n 3)),
-            ("1 + 2 + 3", toks!(n 1, o +, n 2, o +, n 3)),
+            ("1 + 2 + 3", toks!(n 1, o "+", n 2, o "+", n 3)),
             ("", vec![]),
             ("a", toks!(i a,)),
             ("magic", toks!(i magic,)),
             ("123magic", toks!(n 123, i magic)),
             ("snake_case", toks!(i snake_case,)),
-            ("123 + ?", toks!(n 123, o +, il ?)),
+            ("123 + ?", toks!(n 123, o "+", il ?)),
             (".", toks!(il . ,)),
-            ("(1 + 2) * 3", toks!(lp ., n 1, o +, n 2, rp ., o *, n 3)),
+            (
+                "(1 + 2) * 3",
+                toks!(lp ., n 1, o "+", n 2, rp ., o "*", n 3),
+            ),
             ("foo := bar", toks!(i foo, o ":=", i bar)),
-            ("foo := 1 + 2^3", toks!(i foo, o ":=", n 1, o +, n 2, o ^, n 3)),
+            (
+                "foo := 1 + 2^3",
+                toks!(i foo, o ":=", n 1, o "+", n 2, o "^", n 3),
+            ),
         ];
         for (src, toks) in cases {
             let result: Vec<Token> = Lexer::new(src).collect();

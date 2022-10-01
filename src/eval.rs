@@ -36,6 +36,11 @@ pub(crate) trait Operable {
 impl Operable for BigRational {
     fn binary_op(self, op: Operation, rhs: Value) -> Result<Value, EvalError> {
         use Operation::*;
+
+        if let Assign = op {
+            return Err(EvalError::InvalidAssignmentLHS);
+        }
+
         match rhs {
             Value::Number(rhs) => Ok(match op {
                 Add => self + rhs,
@@ -46,6 +51,7 @@ impl Operable for BigRational {
                 UnaryAdd | UnarySubtract => {
                     panic!("Unary operation provided where binary operation was expected")
                 }
+                Assign => unreachable!(),
             }
             .into()),
             Value::Quantity(mut rhs) => match op {
@@ -66,6 +72,7 @@ impl Operable for BigRational {
                 UnaryAdd | UnarySubtract => {
                     panic!("Unary operation provided where binary operation was expected")
                 }
+                Assign => unreachable!(),
             },
         }
     }
@@ -75,7 +82,7 @@ impl Operable for BigRational {
         match op {
             UnaryAdd => Ok(self.into()),
             UnarySubtract => Ok(self.neg().into()),
-            Add | Subtract | Multiply | Divide | Raise => {
+            Add | Subtract | Multiply | Divide | Raise | Assign => {
                 panic!("Binary operation provided where unary operation was expected")
             }
         }
@@ -90,6 +97,10 @@ impl Operable for Quantity {
             panic!("Unary operation provided where binary operation was expected");
         }
 
+        if let Assign = op {
+            return Err(EvalError::InvalidAssignmentLHS);
+        }
+
         match rhs {
             Value::Quantity(rhs) => {
                 // Check for invalid cases
@@ -100,8 +111,8 @@ impl Operable for Quantity {
                         }
                     }
                     Raise => return Err(EvalError::NonIntegerExponent(rhs.into())),
-                    Multiply | Divide => (),
-                    UnaryAdd | UnarySubtract => unreachable!(),
+                    Multiply | Divide => (), // valid case, do nothing
+                    UnaryAdd | UnarySubtract | Assign => unreachable!(),
                 }
 
                 // Perform operations for valid cases
@@ -120,7 +131,7 @@ impl Operable for Quantity {
                         self.units /= rhs.units;
                         self.mag /= rhs.mag;
                     }
-                    Raise | UnaryAdd | UnarySubtract => unreachable!(),
+                    Raise | UnaryAdd | UnarySubtract | Assign => unreachable!(),
                 }
                 Ok(self.into())
             }
@@ -154,7 +165,7 @@ impl Operable for Quantity {
                     }
                 }
 
-                UnaryAdd | UnarySubtract => unreachable!(),
+                UnaryAdd | UnarySubtract | Assign => unreachable!(),
             },
         }
     }
@@ -167,7 +178,7 @@ impl Operable for Quantity {
                 self.mag = -self.mag;
                 Ok(self.into())
             }
-            Add | Subtract | Multiply | Divide | Raise => {
+            Add | Subtract | Multiply | Divide | Raise | Assign => {
                 Err(EvalError::ExpectedOperation("unary", "binary", op))
             }
         }
@@ -240,12 +251,20 @@ impl Node {
     ///     _ => unreachable!(),
     /// }
     /// ```
-    pub fn eval(self, env: &HashMap<String, Value>) -> Result<Value, EvalError> {
+    pub fn eval(self, env: &mut HashMap<String, Value>) -> Result<Value, EvalError> {
         match self {
             Node::BinaryExpression(node) => {
-                let lval = node.lhs.eval(env)?;
-                let rval = node.rhs.eval(env)?;
-                lval.binary_op(node.operation, rval)
+                if node.operation == Operation::Assign {
+                    if let Node::Variable(var) = *node.lhs {
+                        handle_assignment(var.name(), *node.rhs, env)
+                    } else {
+                        Err(EvalError::InvalidAssignmentLHS)
+                    }
+                } else {
+                    let lval = node.lhs.eval(env)?;
+                    let rval = node.rhs.eval(env)?;
+                    lval.binary_op(node.operation, rval)
+                }
             }
             Node::UnaryExpression(node) => {
                 let val = node.expr.eval(env)?;
@@ -257,6 +276,23 @@ impl Node {
             Node::Quantity(q) => Ok(q.into()),
         }
     }
+}
+
+/// Handle a variable assignment.
+///
+/// Returns the [Value] of the RHS wrapped in a [Result], or an [EvalError] on
+/// failure.
+fn handle_assignment<T>(
+    name: T,
+    rhs: Node,
+    env: &mut HashMap<String, Value>,
+) -> Result<Value, EvalError>
+where
+    T: ToString,
+{
+    let rval: Value = rhs.eval(env)?;
+    env.insert(name.to_string(), rval.clone());
+    Ok(rval)
 }
 
 #[derive(Error, Debug)]
@@ -275,6 +311,9 @@ pub enum EvalError {
 
     #[error("Only integer number exponents are supported, not `{0}`")]
     NonIntegerExponent(Value),
+
+    #[error("Invalid LHS for assignment operation")]
+    InvalidAssignmentLHS,
 }
 
 #[cfg(test)]
@@ -392,10 +431,10 @@ mod tests {
             4 ^ -1 = 1/4,
         };
 
-        let env = HashMap::new();
+        let mut env = HashMap::new();
         for (repr, node, expected_value) in cases {
             println!("Test case: {}", repr);
-            let res = node.eval(&env).unwrap();
+            let res = node.eval(&mut env).unwrap();
             match res {
                 Value::Number(result_value) => assert_eq!(result_value, expected_value),
                 _ => unreachable!(),
@@ -429,10 +468,10 @@ mod tests {
             - 0 = 0,
         };
 
-        let env = HashMap::new();
+        let mut env = HashMap::new();
         for (repr, node, expected_value) in cases {
             println!("Test case: {}", repr);
-            match node.eval(&env).unwrap() {
+            match node.eval(&mut env).unwrap() {
                 Value::Number(result_value) => assert_eq!(result_value, expected_value),
                 _ => unreachable!(),
             }

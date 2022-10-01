@@ -40,6 +40,9 @@ pub enum Operation {
     #[strum(serialize = "^")]
     Raise,
 
+    #[strum(serialize = ":=")]
+    Assign,
+
     #[strum(serialize = "+")]
     UnaryAdd,
     #[strum(serialize = "-")]
@@ -59,7 +62,7 @@ impl Operation {
     pub fn is_binary(self) -> bool {
         use Operation::*;
         match self {
-            Add | Subtract | Multiply | Divide | Raise => true,
+            Add | Subtract | Multiply | Divide | Raise | Assign => true,
             UnaryAdd | UnarySubtract => false,
         }
     }

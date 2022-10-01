@@ -53,7 +53,7 @@ impl Runtime {
     }
 
     pub fn evaluate(&mut self, input: &str) -> Result<Value, RuntimeError> {
-        Ok(Parser::new(input).parse()?.eval(&self.env)?)
+        Ok(Parser::new(input).parse()?.eval(&mut self.env)?)
     }
 
     pub fn format(&self, value: &Value) -> Result<String, RuntimeError> {
