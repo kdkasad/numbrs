@@ -58,7 +58,13 @@ impl Display for Quantity {
 ///
 /// The [String] parameter is the variable name.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Variable(pub(crate) String);
+pub struct Variable(String);
+
+impl Variable {
+    pub fn name(&self) -> &str {
+        &self.0
+    }
+}
 
 impl<T: ToString> From<T> for Variable {
     fn from(name: T) -> Self {

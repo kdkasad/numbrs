@@ -191,9 +191,9 @@ impl Operable for Value {
 
 impl Variable {
     fn eval(self, env: &HashMap<String, Value>) -> Result<Value, EvalError> {
-        match env.get(&self.0) {
+        match env.get(self.name()) {
             Some(val) => Ok(val.clone()),
-            None => Err(EvalError::UndefinedVariable(self.0)),
+            None => Err(EvalError::UndefinedVariable(self.name().to_owned())),
         }
     }
 }
