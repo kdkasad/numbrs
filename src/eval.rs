@@ -303,7 +303,7 @@ mod tests {
             }
             .into(),
         );
-        let var = Variable("size".to_string());
+        let var = Variable::from("size".to_string());
         let result = var.eval(&env).unwrap();
         assert!(matches!(result, Value::Quantity(_)));
         let result = if let Value::Quantity(q) = result {
@@ -313,6 +313,38 @@ mod tests {
         };
         assert_eq!(result.mag, value);
         assert!(result.units.is_dimensionless());
+    }
+
+    /// Test variable assignment
+    #[test]
+    fn variable_assignment() {
+        let mut env: HashMap<String, Value> = HashMap::new();
+
+        // Run the test twice to test both assigning new variables and
+        // overwriting existing ones
+        for i in 0..2 {
+            let value = rat!(i);
+            let var: Node = Variable::from("foo".to_owned()).into();
+
+            // assign variable
+            let tree = Node::from(BinaryExpression::new(
+                Operation::Assign,
+                var.clone(),
+                value.clone().into(),
+            ));
+
+            // verify return value of assignment
+            match tree.eval(&mut env).unwrap() {
+                Value::Number(rat) => assert_eq!(rat, value),
+                _ => unreachable!(),
+            }
+
+            // verify new variable exists
+            match var.eval(&mut env).unwrap() {
+                Value::Number(rat) => assert_eq!(rat, value),
+                _ => unreachable!(),
+            }
+        }
     }
 
     /// Test binary operations between number nodes
