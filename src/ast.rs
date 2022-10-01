@@ -60,9 +60,9 @@ impl Display for Quantity {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Variable(pub(crate) String);
 
-impl From<String> for Variable {
-    fn from(name: String) -> Self {
-        Self(name)
+impl<T: ToString> From<T> for Variable {
+    fn from(name: T) -> Self {
+        Self(name.to_string())
     }
 }
 

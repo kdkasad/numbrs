@@ -291,7 +291,7 @@ mod tests {
 
         let value = BigRational::zero();
         env.insert("zero".to_string(), value.clone().into());
-        let var = Variable("zero".to_string());
+        let var = Variable::from("zero");
         assert_eq!(*var.eval(&env).unwrap().magnitude(), value);
 
         let value = rat!(1);
@@ -303,7 +303,7 @@ mod tests {
             }
             .into(),
         );
-        let var = Variable::from("size".to_string());
+        let var = Variable::from("size");
         let result = var.eval(&env).unwrap();
         assert!(matches!(result, Value::Quantity(_)));
         let result = if let Value::Quantity(q) = result {
@@ -324,7 +324,7 @@ mod tests {
         // overwriting existing ones
         for i in 0..2 {
             let value = rat!(i);
-            let var: Node = Variable::from("foo".to_owned()).into();
+            let var: Node = Variable::from("foo").into();
 
             // assign variable
             let tree = Node::from(BinaryExpression::new(

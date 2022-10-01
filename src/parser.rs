@@ -54,7 +54,7 @@ impl Parser {
         let mut lhs: Node = match self.tokens.next() {
             Some(tok) => match tok {
                 Token::Number(numstr) => Node::Number(str_to_num(&numstr)?),
-                Token::Ident(name) => Node::Variable(Variable(name)),
+                Token::Ident(name) => Node::Variable(Variable::from(name)),
                 Token::GroupBegin => {
                     // when left paren encountered, parse sub-expression
                     let lhs = self.parse_expr(0)?;
@@ -194,7 +194,7 @@ mod tests {
                 binexpr!( $($e)+ )
             };
             ( $num:literal ) => { Node::Number(rat!($num)) };
-            ( $name:ident ) => { Node::Variable(Variable(stringify!($name).to_owned())) };
+            ( $name:ident ) => { Node::Variable(Variable::from(stringify!($name))) };
         }
 
         let cases: Vec<(&'static str, Node)> = vec![
