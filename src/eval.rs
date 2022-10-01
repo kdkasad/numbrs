@@ -162,11 +162,12 @@ impl Operable for Quantity {
     fn unary_op(mut self, op: Operation) -> Result<Value, EvalError> {
         use Operation::*;
         match op {
-            UnaryAdd => {
+            UnaryAdd => Ok(self.into()),
+            UnarySubtract => {
                 self.mag = -self.mag;
                 Ok(self.into())
             }
-            Add | Subtract | Multiply | Divide | Raise | UnarySubtract => {
+            Add | Subtract | Multiply | Divide | Raise => {
                 Err(EvalError::ExpectedOperation("unary", "binary", op))
             }
         }
