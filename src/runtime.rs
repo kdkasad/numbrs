@@ -44,11 +44,12 @@ pub struct Runtime {
 impl Runtime {
     const DEFAULT_PRECISION: usize = 5;
     const UNASSIGN_IDENT: &'static str = "_";
+    const PRECISION_IDENT: &'static str = "_prec";
 
     pub fn new() -> Self {
         let mut env = HashMap::new();
         env.insert(Self::UNASSIGN_IDENT.to_string(), BigRational::zero().into());
-        env.insert("_prec".to_string(), rat!(Self::DEFAULT_PRECISION).into());
+        env.insert(Self::PRECISION_IDENT.to_string(), rat!(Self::DEFAULT_PRECISION).into());
         Self { env }
     }
 
@@ -57,7 +58,7 @@ impl Runtime {
     }
 
     pub fn format(&self, value: &Value) -> Result<String, RuntimeError> {
-        match self.env.get("_prec") {
+        match self.env.get(Self::PRECISION_IDENT) {
             Some(prec) => match prec {
                 Value::Number(rat) => {
                     if rat.is_integer() {
