@@ -21,7 +21,7 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 //! Abstract syntax tree for Numbrs
 
-use std::{fmt, fmt::Display};
+use std::fmt::{self, Display};
 
 use num::BigRational;
 use thiserror::Error;
@@ -59,6 +59,12 @@ impl Display for Quantity {
 /// The [String] parameter is the variable name.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Variable(pub(crate) String);
+
+impl From<String> for Variable {
+    fn from(name: String) -> Self {
+        Self(name)
+    }
+}
 
 /// Expression with unary operator
 #[derive(Clone, Debug, PartialEq)]
