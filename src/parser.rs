@@ -128,7 +128,7 @@ impl BindingPower for Operation {
     fn infix_binding_power(&self) -> (u32, u32) {
         use Operation::*;
         match self {
-            Assign => (2, 1),
+            Assign => (10, 1),
             Add | Subtract => (3, 4),
             Multiply | Divide => (5, 6),
             Raise => (7, 8),
