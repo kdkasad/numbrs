@@ -55,7 +55,19 @@ impl Parser {
             Some(tok) => match tok {
                 Token::Number(numstr) => Node::Number(str_to_num(&numstr)?),
                 Token::Ident(name) => Node::Variable(Variable(name)),
-                Token::Operator(_) => return Err(ParseError::ExpectedOperand(tok.into())),
+                Token::GroupBegin => {
+                    // when left paren encountered, parse sub-expression
+                    let lhs = self.parse_expr(0)?;
+                    // consume right paren
+                    match self.tokens.next() {
+                        Some(Token::GroupEnd) => (),
+                        _ => return Err(ParseError::UnmatchedGroup),
+                    }
+                    lhs
+                }
+                Token::Operator(_) | Token::GroupEnd => {
+                    return Err(ParseError::ExpectedOperand(tok.into()))
+                }
                 Token::Illegal(c) => return Err(ParseError::IllegalToken(c)),
             },
             None => return Err(ParseError::EndOfStream),
@@ -70,7 +82,10 @@ impl Parser {
                     implicit = true;
                     Operation::Multiply
                 }
-                Token::Number(_) => return Err(ParseError::ExpectedToken("operator", tok.into())),
+                Token::GroupEnd => break,
+                Token::Number(_) | Token::GroupBegin => {
+                    return Err(ParseError::ExpectedToken("operator", tok.into()))
+                }
                 Token::Illegal(c) => return Err(ParseError::IllegalToken(c)),
             };
 
@@ -149,6 +164,9 @@ pub enum ParseError {
 
     #[error("Failed to parse '{0}' as a number literal")]
     ParseNumberLiteral(String),
+
+    #[error("Unmatched group (possibly missing parenthesis)")]
+    UnmatchedGroup,
 }
 
 #[cfg(test)]

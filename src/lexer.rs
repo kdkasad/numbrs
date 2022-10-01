@@ -49,7 +49,7 @@ use strum_macros::{Display, IntoStaticStr};
 
 use crate::operation::Operation;
 
-#[derive(Display, Debug, IntoStaticStr, PartialEq, Eq)]
+#[derive(Clone, Display, Debug, IntoStaticStr, PartialEq, Eq)]
 #[strum(serialize_all = "lowercase")]
 pub enum Token {
     Operator(Operation),
@@ -58,12 +58,18 @@ pub enum Token {
     #[strum(serialize = "identifier")]
     Ident(String),
 
+    #[strum(serialize = "group open")]
+    GroupBegin,
+    #[strum(serialize = "group close")]
+    GroupEnd,
+
     Illegal(char),
 }
 
 /// Input lexer. Processes input strings into token streams.
 ///
 /// See [module-level][crate::lexer] documentation for examples.
+#[derive(Clone, Debug)]
 pub struct Lexer {
     chars: Peekable<IntoIter<char>>,
 }
@@ -93,6 +99,12 @@ impl Iterator for Lexer {
                     Some(Token::Number(collect_chars(&mut self.chars, |c| {
                         c.is_numeric()
                     })))
+                } else if "({[".contains(c) {
+                    self.chars.next();
+                    Some(Token::GroupBegin)
+                } else if ")}]".contains(c) {
+                    self.chars.next();
+                    Some(Token::GroupEnd)
                 } else if let Ok(op) = Operation::from_str(&c.to_string()) {
                     // c is an operator character
                     // consume the character and return and operator token
@@ -171,6 +183,8 @@ mod tests {
             ( il $b:tt ) => {
                 Token::Illegal(stringify!($b).chars().next().unwrap())
             };
+            ( lp $b:tt ) => { Token::GroupBegin };
+            ( rp $b:tt ) => { Token::GroupEnd };
             ( $( $a:tt $b:tt ),+ $(,)? ) => {
                 vec![ $( toks!($a $b), )+ ]
             }
@@ -185,7 +199,7 @@ mod tests {
             ("snake_case", toks!(i snake_case,)),
             ("123 + ?", toks!(n 123, o +, il ?)),
             (".", toks!(il . ,)),
-            ("(1 + 2) * 3", toks!(o "(", n 1, o +, n 2, o ")", o *, n 3)),
+            ("(1 + 2) * 3", toks!(lp ., n 1, o +, n 2, rp ., o *, n 3)),
         ];
         for (src, toks) in cases {
             let result: Vec<Token> = Lexer::new(src).collect();
