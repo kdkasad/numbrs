@@ -127,7 +127,7 @@ pub enum RuntimeError {
     #[error("Evaluation error: {0}")]
     Eval(#[from] EvalError),
 
-    #[error("Invalid precision specifier: {}", .0.format(3))]
+    #[error("Got non-natural precision specifier `{}`. Unable to format result.", .0.format(3))]
     InvalidPrecision(Value),
 
     #[error("Can't assign special variable `{0}`")]

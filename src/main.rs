@@ -60,10 +60,7 @@ fn main() {
                 match rt.evaluate(&line) {
                     Ok(value) => match rt.format(&value) {
                         Ok(output) => println!("{}", output),
-                        Err(err) => {
-                            eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, err);
-                            println!("{}", value);
-                        }
+                        Err(err) => eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, err),
                     },
                     Err(err) => eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, err),
                 }
