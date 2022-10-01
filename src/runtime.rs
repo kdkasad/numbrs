@@ -26,9 +26,10 @@ use std::collections::HashMap;
 use num::{BigRational, ToPrimitive, Zero};
 
 use crate::{
-    ast::Value,
+    ast::{BinaryExpression, Node, UnaryExpression, Value},
     eval::EvalError,
     format::Formatter,
+    operation::Operation,
     parser::{ParseError, Parser},
     rat_util_macros::rat,
 };
@@ -43,18 +44,23 @@ pub struct Runtime {
 
 impl Runtime {
     const DEFAULT_PRECISION: usize = 5;
-    const UNASSIGN_IDENT: &'static str = "_";
     const PRECISION_IDENT: &'static str = "_prec";
+    const UNASSIGN_IDENT: &'static str = "_";
 
     pub fn new() -> Self {
         let mut env = HashMap::new();
         env.insert(Self::UNASSIGN_IDENT.to_string(), BigRational::zero().into());
-        env.insert(Self::PRECISION_IDENT.to_string(), rat!(Self::DEFAULT_PRECISION).into());
+        env.insert(
+            Self::PRECISION_IDENT.to_string(),
+            rat!(Self::DEFAULT_PRECISION).into(),
+        );
         Self { env }
     }
 
     pub fn evaluate(&mut self, input: &str) -> Result<Value, RuntimeError> {
-        Ok(Parser::new(input).parse()?.eval(&mut self.env)?)
+        let tree = Parser::new(input).parse()?;
+        check_for_prohibited_behavior(&tree)?;
+        Ok(tree.eval(&mut self.env)?)
     }
 
     pub fn format(&self, value: &Value) -> Result<String, RuntimeError> {
@@ -77,6 +83,36 @@ impl Runtime {
     }
 }
 
+/// Check if an expression tree contains prohibited behavior.
+/// The list of prohibited behaviors currently includes:
+///   - Assigning to the `_` variable
+fn check_for_prohibited_behavior(tree: &Node) -> Result<(), RuntimeError> {
+    match tree {
+        Node::BinaryExpression(BinaryExpression {
+            operation,
+            lhs,
+            rhs,
+        }) => {
+            // Check for assignment to `_`
+            if let Operation::Assign = operation {
+                if let Node::Variable(var) = &**lhs {
+                    if var.name() == Runtime::UNASSIGN_IDENT {
+                        return Err(RuntimeError::AssignmentProhibited(var.name().to_owned()));
+                    }
+                }
+            }
+
+            // Recursively check subtrees
+            check_for_prohibited_behavior(lhs)?;
+            check_for_prohibited_behavior(rhs)?;
+            Ok(())
+        }
+
+        Node::UnaryExpression(UnaryExpression { expr, .. }) => check_for_prohibited_behavior(expr),
+        Node::Variable(_) | Node::Number(_) | Node::Quantity(_) => Ok(()),
+    }
+}
+
 impl Default for Runtime {
     fn default() -> Self {
         Self::new()
@@ -93,11 +129,16 @@ pub enum RuntimeError {
 
     #[error("Invalid precision specifier: {}", .0.format(3))]
     InvalidPrecision(Value),
+
+    #[error("Can't assign special variable `{0}`")]
+    AssignmentProhibited(String),
 }
 
 #[cfg(test)]
 mod tests {
     use std::f64::consts::PI;
+
+    use pretty_assertions::assert_eq;
 
     use super::*;
 
@@ -128,5 +169,26 @@ mod tests {
             rt.evaluate(&format!("_prec := {}", prec)).unwrap();
             assert_eq!(expected, rt.format(&value.into()).unwrap());
         }
+    }
+
+    #[test]
+    fn assign_underscore() {
+        macro_rules! test {
+            ($rt:expr, $expr:literal) => {
+                match $rt
+                    .evaluate($expr)
+                    .expect_err("Expression evaluation was successful")
+                {
+                    RuntimeError::AssignmentProhibited(var) => {
+                        assert_eq!(var, Runtime::UNASSIGN_IDENT);
+                    }
+                    _ => unreachable!(),
+                }
+            };
+        }
+        let mut rt = Runtime::new();
+        test!(rt, "_ := 123");
+        test!(rt, "1 + _ := 123");
+        test!(rt, "a := _ := 17");
     }
 }
