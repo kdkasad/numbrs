@@ -181,9 +181,9 @@ mod tests {
     #[test]
     fn parse_valid_expressions() {
         macro_rules! binexpr {
-            ( $op:tt $lhs:tt $rhs:tt ) => {
+            ( $op:literal $lhs:tt $rhs:tt ) => {
                 Node::BinaryExpression(BinaryExpression {
-                    operation: Operation::from_str(&stringify!($op)).unwrap(),
+                    operation: Operation::from_str(&$op).unwrap(),
                     lhs: Box::new(subexpr!($lhs)),
                     rhs: Box::new(subexpr!($rhs)),
                 })
@@ -197,26 +197,30 @@ mod tests {
             ( $name:ident ) => { Node::Variable(Variable(stringify!($name).to_owned())) };
         }
 
-        let good_cases: Vec<(&'static str, Node)> = vec![
+        let cases: Vec<(&'static str, Node)> = vec![
             ("1", subexpr!(1)),
             ("var", subexpr!(var)),
-            ("1 + 2", binexpr!(+ 1 2)),
-            ("1 + 2 * 3", binexpr!(+ 1 (* 2 3))),
+            ("1 + 2", binexpr!("+" 1 2)),
+            ("1 + 2 * 3", binexpr!("+" 1 ("*" 2 3))),
             (
                 "1 + 2 * 3 - 4 ^ 6 / 5",
-                binexpr!(- (+ 1 (* 2 3)) (/ (^ 4 6) 5)),
+                binexpr!("-" ("+" 1 ("*" 2 3)) ("/" ("^" 4 6) 5)),
             ),
             (
                 "1 + abc * 3 - 4 ^ variable / 5",
-                binexpr!(- (+ 1 (* abc 3)) (/ (^ 4 variable) 5)),
+                binexpr!("-" ("+" 1 ("*" abc 3)) ("/" ("^" 4 variable) 5)),
             ),
-            ("100 m", binexpr!(* 100 m)),
-            ("10 ft + 90 m", binexpr!(+ (* 10 ft) (* 90 m))),
-            ("123 kg m/s^2", binexpr!(/ (* (* 123 kg) m) (^ s 2))),
-            ("(1 + 2) * 3", binexpr!(* (+ 1 2) 3)),
+            ("100 m", binexpr!("*" 100 m)),
+            ("10 ft + 90 m", binexpr!("+" ("*" 10 ft) ("*" 90 m))),
+            ("123 kg m/s^2", binexpr!("/" ("*" ("*" 123 kg) m) ("^" s 2))),
+            ("(1 + 2) * 3", binexpr!("*" ("+" 1 2) 3)),
+            ("foo := bar", binexpr!(":=" foo bar)),
+            ("foo := 1 + 2^3", binexpr!(":=" foo ("+" 1 ("^" 2 3)))),
+            ("a := b := c", binexpr!(":=" a (":=" b c))),
+            ("1 + a := 2 + 3", binexpr!("+" 1 (":=" a ("+" 2 3)))),
         ];
 
-        for (input, expected_result) in good_cases {
+        for (input, expected_result) in cases {
             println!("Testing expression: '{}'", input);
             assert_eq!(Parser::new(input).parse().unwrap(), expected_result);
         }

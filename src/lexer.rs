@@ -200,6 +200,8 @@ mod tests {
             ("123 + ?", toks!(n 123, o +, il ?)),
             (".", toks!(il . ,)),
             ("(1 + 2) * 3", toks!(lp ., n 1, o +, n 2, rp ., o *, n 3)),
+            ("foo := bar", toks!(i foo, o ":=", i bar)),
+            ("foo := 1 + 2^3", toks!(i foo, o ":=", n 1, o +, n 2, o ^, n 3)),
         ];
         for (src, toks) in cases {
             let result: Vec<Token> = Lexer::new(src).collect();
