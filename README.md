@@ -7,6 +7,16 @@ The library contains all of the functions for processing input and performing
 calculations. The binary is a command-line application that provides a user
 interface to the Numbrs library.
 
+## Project goal
+
+The goal of Numbrs is twofold:
+  1. For me to learn and practice programming in Rust.
+  2. To build a calculator which can handle the following features:
+     - [x] Arithmetic
+	 - [ ] Bitwise operations
+	 - [ ] Number base conversion
+	 - [ ] Unit/quantity conversion
+
 ## Installation
 
 Currently, Numbrs must be built from sources.
