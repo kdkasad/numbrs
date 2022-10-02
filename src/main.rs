@@ -27,11 +27,20 @@ use rustyline::{error::ReadlineError, Editor};
 
 use self::textio::*;
 
+macro_rules! message {
+    ($name:literal) => {
+        include_str!(concat!(env!("OUT_DIR"), "/", $name, "_message.txt"))
+    };
+}
+
 mod textio {
     pub const PROMPT: &str = "> ";
     pub const COLOR_ERR: &str = "\x1b[1;31m";
     pub const COLOR_WARN: &str = "\x1b[1;33m";
     pub const COLOR_RST: &str = "\x1b[m";
+
+    pub const STARTUP_MESSAGE: &str = message!("startup");
+    pub const LICENSE_MESSAGE: &str = message!("license");
 }
 
 fn main() {
@@ -48,6 +57,10 @@ fn main() {
     };
     let mut rt = Runtime::new();
 
+    // Print startup message
+    // TODO: only print when connected to terminal
+    eprintln!("{}", STARTUP_MESSAGE);
+
     loop {
         match rl.readline(PROMPT) {
             Ok(line) => {
@@ -56,6 +69,11 @@ fn main() {
                 }
 
                 rl.add_history_entry(&line);
+
+                if line == "license" {
+                    print!("{}", LICENSE_MESSAGE);
+                    continue;
+                }
 
                 match rt.evaluate(&line) {
                     Ok(value) => match rt.format(&value) {
