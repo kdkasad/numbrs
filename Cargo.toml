@@ -19,12 +19,26 @@
 
 [package]
 name = "numbrs"
+description = "A text-based calculator written in Rust"
+version = "1.0.0"
+
+readme = "README.md"
+repository = "https://github.com/kdkasad/numbrs"
+license = "GPL-3.0"
+
 authors = [
     "Kian Kasad <kian@kasad.com>",
 ]
-version = "1.0.0"
-edition = "2021"
 
+categories = [
+    "command-line-utilities",
+    "mathematics",
+    "parser-implementations",
+    "science",
+    "value-formatting"
+]
+
+edition = "2021"
 build = "build.rs"
 
 [package.metadata]
