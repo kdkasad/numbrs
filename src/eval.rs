@@ -387,6 +387,49 @@ mod tests {
         }
     }
 
+    /// Test variable unassignment
+    #[test]
+    fn variable_unassignment() {
+        let mut env: HashMap<String, Value> = HashMap::new();
+
+        let value = rat!(123);
+        let var: Node = Variable::from("foo").into();
+        let unassign_var: Node = Variable::from("_").into();
+
+        // assign variable
+        let tree = Node::from(BinaryExpression::new(
+            Operation::Assign,
+            var.clone(),
+            value.clone().into(),
+        ));
+        tree.eval(&mut env).unwrap();
+
+        // verify new variable exists
+        match var.clone().eval(&mut env).unwrap() {
+            Value::Number(rat) => assert_eq!(rat, value),
+            _ => unreachable!(),
+        }
+
+        // unassign variable
+        let tree = Node::from(BinaryExpression::new(
+            Operation::Assign,
+            var.clone(),
+            unassign_var,
+        ));
+
+        // verify return value of unassignment
+        match tree.eval(&mut env).unwrap() {
+            Value::Number(rat) => assert_eq!(rat, rat!(0)),
+            _ => unreachable!(),
+        }
+
+        // verify variable doesn't exist
+        match var.eval(&mut env) {
+            Err(EvalError::UndefinedVariable(name)) if name == "foo" => (), // success
+            Err(_) => panic!("Unexpected error occurred"),
+            Ok(_) => panic!("Variable exists"),
+        }
+    }
     /// Test binary operations between number nodes
     #[test]
     fn binary_ops_between_numbers() {
