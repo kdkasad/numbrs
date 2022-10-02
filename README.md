@@ -2,6 +2,11 @@
 
 A text-based calculator written in Rust.
 
+Numbrs consists of both a library and a binary crate.
+The library contains all of the functions for processing input and performing
+calculations. The binary is a command-line application that provides a user
+interface to the Numbrs library.
+
 ## Installation
 
 Currently, Numbrs must be built from sources.
