@@ -45,7 +45,7 @@ pub struct Runtime {
 impl Runtime {
     const DEFAULT_PRECISION: usize = 5;
     const PRECISION_IDENT: &'static str = "_prec";
-    const UNASSIGN_IDENT: &'static str = "_";
+    pub const UNASSIGN_IDENT: &'static str = "_";
 
     pub fn new() -> Self {
         let mut env = HashMap::new();

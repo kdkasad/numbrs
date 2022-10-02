@@ -23,10 +23,10 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 use std::{collections::HashMap, ops::Neg};
 
-use num::{BigRational, ToPrimitive};
+use num::{BigRational, ToPrimitive, Zero};
 use thiserror::Error;
 
-use crate::{ast::*, operation::Operation, unit::UnitList};
+use crate::{ast::*, operation::Operation, runtime::Runtime, unit::UnitList};
 
 pub(crate) trait Operable {
     fn binary_op(self, op: Operation, rhs: Value) -> Result<Value, EvalError>;
@@ -290,8 +290,19 @@ fn handle_assignment<T>(
 where
     T: ToString,
 {
+    let name = name.to_string();
+
+    // If RHS = Variable("_"), remove LHS from environment
+    if let Node::Variable(rvar) = &rhs {
+        if rvar.name() == Runtime::UNASSIGN_IDENT {
+            env.remove(&name);
+            return Ok(BigRational::zero().into());
+        }
+    }
+
+    // Else, assign LHS and return value of RHS
     let rval: Value = rhs.eval(env)?;
-    env.insert(name.to_string(), rval.clone());
+    env.insert(name, rval.clone());
     Ok(rval)
 }
 
@@ -393,8 +404,9 @@ mod tests {
         let mut env: HashMap<String, Value> = HashMap::new();
 
         let value = rat!(123);
-        let var: Node = Variable::from("foo").into();
-        let unassign_var: Node = Variable::from("_").into();
+        let varname = "foo";
+        let var: Node = Variable::from(varname).into();
+        let unassign_var: Node = Variable::from(Runtime::UNASSIGN_IDENT).into();
 
         // assign variable
         let tree = Node::from(BinaryExpression::new(
@@ -425,7 +437,7 @@ mod tests {
 
         // verify variable doesn't exist
         match var.eval(&mut env) {
-            Err(EvalError::UndefinedVariable(name)) if name == "foo" => (), // success
+            Err(EvalError::UndefinedVariable(name)) if name == varname => (), // success
             Err(_) => panic!("Unexpected error occurred"),
             Ok(_) => panic!("Variable exists"),
         }
@@ -522,4 +534,5 @@ mod tests {
     }
 
     // TODO: test evaluation of quantities
+    // TODO: test variable unassignment
 }
