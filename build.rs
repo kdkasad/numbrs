@@ -4,7 +4,7 @@ extern crate glob;
 use std::{
     env,
     error::Error,
-    fs::File,
+    fs::{self, File},
     io::{BufReader, BufWriter, Read, Write},
     path::Path,
 };
@@ -13,15 +13,15 @@ use cargo_metadata::MetadataCommand;
 use glob::glob;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    // Search compile message source files with the name `*_message.txt.in`
-    for entry in glob("src/*_message.txt.in").expect("Failed to read glob pattern") {
+    // Search for and compile message source files
+    for entry in glob("src/messages/*.in").expect("Failed to read glob pattern") {
         let name: String = entry?
-            .file_stem()
-            .unwrap() // filename must contain `.`
+            .file_name()
+            .unwrap() // filename must exist
             .to_str()
-            .expect("Invalid file name")
-            .strip_suffix("_message.txt")
-            .unwrap() // file stem must end in `_message.txt`
+            .expect("Invalid UTF-8 in file name")
+            .strip_suffix(".in")
+            .unwrap() // file name must end in `.in`
             .to_owned();
         compile_message(&name)?;
     }
@@ -35,11 +35,15 @@ macro_rules! replace_with_env {
 }
 
 fn compile_message(name: &str) -> Result<(), Box<dyn Error>> {
-    let mut inbuf = BufReader::new(File::open(format!("src/{}_message.txt.in", name))?);
+    let mut inbuf = BufReader::new(File::open(format!("src/messages/{}.in", name))?);
 
-    let out_dir = env::var("OUT_DIR")?;
-    let dest_path = Path::new(&out_dir).join(format!("{}_message.txt", name));
-    let mut outbuf = BufWriter::new(File::create(&dest_path)?);
+    let cargo_out_dir_name = env::var("OUT_DIR")?;
+    let dest_dir = Path::new(&cargo_out_dir_name).join("messages");
+    let out_file = dest_dir.join(name);
+
+    // Create destination file and parent directory
+    fs::create_dir_all(dest_dir)?; // create_dir_all() doesn't fail if dir exists
+    let mut outbuf = BufWriter::new(File::create(&out_file)?);
 
     // Read message source
     let mut message = String::new();
@@ -67,7 +71,8 @@ fn compile_message(name: &str) -> Result<(), Box<dyn Error>> {
     let years = MetadataCommand::new()
         .exec()?
         .packages
-        .into_iter().find(|pkg| pkg.name == env::var("CARGO_PKG_NAME").unwrap())
+        .into_iter()
+        .find(|pkg| pkg.name == env::var("CARGO_PKG_NAME").unwrap())
         .unwrap()
         .metadata["copyright-years"]
         .as_str()

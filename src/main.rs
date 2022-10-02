@@ -29,7 +29,7 @@ use self::textio::*;
 
 macro_rules! message {
     ($name:literal) => {
-        include_str!(concat!(env!("OUT_DIR"), "/", $name, "_message.txt"))
+        include_str!(concat!(env!("OUT_DIR"), "/messages/", $name, ".txt"))
     };
 }
 
