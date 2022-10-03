@@ -203,7 +203,7 @@ mod tests {
             ("123magic", toks!(n 123, i magic)),
             ("snake_case", toks!(i snake_case,)),
             ("123 + ?", toks!(n 123, o "+", il ?)),
-            (".", toks!(il . ,)),
+            (".", vec![Token::Number(".".to_string())]),
             (
                 "(1 + 2) * 3",
                 toks!(lp ., n 1, o "+", n 2, rp ., o "*", n 3),
