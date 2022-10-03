@@ -148,7 +148,7 @@ mod tests {
             ( $a:expr , $b:expr, $c:expr ) => {
                 (
                     BigRational::from_float($a as f64).unwrap(),
-                    BigRational::from_float($b as f64).unwrap(),
+                    $b as f64,
                     stringify!($c),
                 )
             };
@@ -166,7 +166,7 @@ mod tests {
 
         for (value, prec, expected) in cases {
             // rt.env.insert("_prec".to_string(), prec);
-            rt.evaluate(&format!("_prec := {}", prec)).unwrap();
+            rt.evaluate(&format!("_prec = {}", prec)).unwrap();
             assert_eq!(expected, rt.format(&value.into()).unwrap());
         }
     }
@@ -187,8 +187,8 @@ mod tests {
             };
         }
         let mut rt = Runtime::new();
-        test!(rt, "_ := 123");
-        test!(rt, "1 + _ := 123");
-        test!(rt, "a := _ := 17");
+        test!(rt, "_ = 123");
+        test!(rt, "1 + _ = 123");
+        test!(rt, "a = _ = 17");
     }
 }

@@ -40,7 +40,7 @@ pub enum Operation {
     #[strum(serialize = "^")]
     Raise,
 
-    #[strum(serialize = ":=")]
+    #[strum(serialize = "=")]
     Assign,
 
     #[strum(serialize = "+")]
@@ -93,6 +93,7 @@ mod tests {
         assert_eq!(Operation::Raise.to_string(), "^");
         assert_eq!(Operation::UnaryAdd.to_string(), "+");
         assert_eq!(Operation::UnarySubtract.to_string(), "-");
+        assert_eq!(Operation::Assign.to_string(), "=");
     }
 
     #[test]

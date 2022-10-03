@@ -72,7 +72,7 @@ Example:
 
 | Operator | Operation       | Precedence | Associativity |
 | ---      | ---             | ---        | ---           |
-| `:=`     | Assign variable | (10, 1)\*  | Right         |
+| `=`      | Assign variable | (10, 1)\*  | Right         |
 | `+`      | Add             | 3          | Left          |
 | `-`      | Subtract        | 3          | Left          |
 | `*`      | Multiply        | 5          | Left          |
@@ -84,17 +84,17 @@ Numbrs follows standard mathematical order of operations when possible.
 For example, `1 + 2 * 3 + 4` is equivalent to `(1 + (2 * 3)) + 4`.
 
 \* The assignment operator is special: it has a priority of 10 on the left side
-and 1 on the right side. This means `a + b := c + d` is equivalent to
-`a * (b := (c + d))`.
+and 1 on the right side. This means `a + b = c + d` is equivalent to
+`a * (b = (c + d))`.
 
 ### Variables
 
 Values can be stored in variables. Variable names can contain letters, numbers,
 and underscores. However, a variable name cannot start with a number.
 
-The `:=` assignment operator is used to assign variables. It has lower
+The `=` assignment operator is used to assign variables. It has lower
 precedence than all other operators. It is also right-associative, meaning
-`a := b := c` is equivalent to `a := (b := c)`.
+`a = b = c` is equivalent to `a = (b = c)`.
 
 To unassign/clear a variable, assign it a value of `_` (underscore).
 See the [Special Variables](#special-variables) section below for details.
@@ -112,11 +112,11 @@ variable will be removed from the environment.
 Example:
 
 	$ numbrs
-	> foo := 123
+	> foo = 123
 	123
 	> foo
 	123
-	> foo := _
+	> foo = _
 	0
 	> foo
 	Error: undefined variable: 'foo'
@@ -125,7 +125,7 @@ The underscore cannot be assigned. An error message will be printed if you
 attempt to:
 
 	$ numbrs
-	> _ := 123
+	> _ = 123
 	Error: Can't assign special variable `_`
 
 ##### `_prec`

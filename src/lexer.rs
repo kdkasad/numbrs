@@ -116,14 +116,6 @@ impl Iterator for Lexer {
                     Some(Token::Ident(collect_chars(&mut self.chars, |c| {
                         c.is_alphabetic() || c == '_'
                     })))
-                } else if c == ':' { // check for assignment operator
-                    self.chars.next(); // consume ':'
-                    if let Some('=') = self.chars.peek() {
-                        self.chars.next(); // consume '='
-                        Some(Token::Operator(Operation::Assign))
-                    } else {
-                        Some(Token::Illegal(c))
-                    }
                 } else {
                     // unrecognized character
                     // consume the character and return an illegal token
@@ -208,10 +200,10 @@ mod tests {
                 "(1 + 2) * 3",
                 toks!(lp ., n 1, o "+", n 2, rp ., o "*", n 3),
             ),
-            ("foo := bar", toks!(i foo, o ":=", i bar)),
+            ("foo = bar", toks!(i foo, o "=", i bar)),
             (
-                "foo := 1 + 2^3",
-                toks!(i foo, o ":=", n 1, o "+", n 2, o "^", n 3),
+                "foo = 1 + 2^3",
+                toks!(i foo, o "=", n 1, o "+", n 2, o "^", n 3),
             ),
             ("1.23", toks!(n 1.23,)),
             ("1.35 m", toks!(n 1.35, i m)),
