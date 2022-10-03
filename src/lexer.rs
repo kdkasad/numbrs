@@ -93,11 +93,11 @@ impl Iterator for Lexer {
                     // consume whitespace and continue
                     collect_chars(&mut self.chars, |c| c.is_whitespace());
                     self.next()
-                } else if c.is_numeric() {
+                } else if c.is_numeric() || c == '.' {
                     // c is a digit
                     // collect contiguous digits and return number token
                     Some(Token::Number(collect_chars(&mut self.chars, |c| {
-                        c.is_numeric()
+                        c.is_numeric() || c == '.'
                     })))
                 } else if "({[".contains(c) {
                     self.chars.next();
@@ -213,6 +213,8 @@ mod tests {
                 "foo := 1 + 2^3",
                 toks!(i foo, o ":=", n 1, o "+", n 2, o "^", n 3),
             ),
+            ("1.23", toks!(n 1.23,)),
+            ("1.35 m", toks!(n 1.35, i m)),
         ];
         for (src, toks) in cases {
             let result: Vec<Token> = Lexer::new(src).collect();

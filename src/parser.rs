@@ -31,7 +31,6 @@ use crate::{
     ast::{BinaryExpression, Node, Variable},
     lexer::{Lexer, Token},
     operation::Operation,
-    rat_util_macros::rat,
 };
 
 pub struct Parser {
@@ -113,8 +112,11 @@ impl Parser {
 }
 
 fn str_to_num(src: &str) -> Result<BigRational, ParseError> {
-    match src.parse::<i32>() {
-        Ok(int) => Ok(rat!(int)),
+    match src.parse::<f64>() {
+        Ok(float) => match BigRational::from_float(float) {
+            Some(rat) => Ok(rat),
+            None => Err(ParseError::ParseNumberLiteral(src.to_owned())),
+        },
         Err(_) => Err(ParseError::ParseNumberLiteral(src.to_owned())),
     }
 }
@@ -177,7 +179,6 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use super::*;
-    use crate::rat_util_macros::rat;
 
     #[test]
     fn parse_valid_expressions() {
@@ -194,7 +195,7 @@ mod tests {
             ( ( $($e:tt)+ ) ) => {
                 binexpr!( $($e)+ )
             };
-            ( $num:literal ) => { Node::Number(rat!($num)) };
+            ( $num:literal ) => { Node::Number(BigRational::from_float($num as f64).unwrap()) };
             ( $name:ident ) => { Node::Variable(Variable::from(stringify!($name))) };
         }
 
@@ -219,6 +220,9 @@ mod tests {
             ("foo := 1 + 2^3", binexpr!(":=" foo ("+" 1 ("^" 2 3)))),
             ("a := b := c", binexpr!(":=" a (":=" b c))),
             ("1 + a := 2 + 3", binexpr!("+" 1 (":=" a ("+" 2 3)))),
+            ("1.5", subexpr!(1.5)),
+            (".0125", subexpr!(0.0125)),
+            ("180.", subexpr!(180)),
         ];
 
         for (input, expected_result) in cases {
@@ -243,6 +247,7 @@ mod tests {
             ParseError::ExpectedOperand("operator") => ["+", "-", "*", "/", "1 * +"];
             ParseError::ExpectedToken("operator", _got) => ["1 a 2"];
             ParseError::IllegalToken(_) => ["123 ? 456", "&", "#001"];
+            ParseError::ParseNumberLiteral(_) => ["1.2.3"];
         }
     }
 }
