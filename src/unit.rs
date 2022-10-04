@@ -83,9 +83,9 @@ impl Display for Unit {
 
 /// Wrapper type for a list of units
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct UnitList(Vec<Unit>);
+pub struct Units(Vec<Unit>);
 
-impl UnitList {
+impl Units {
     /// Calculate the dimension of a list of units.
     ///
     /// Raises each unit's dimension to its exponent, then multiplies the
@@ -120,7 +120,7 @@ impl UnitList {
     }
 }
 
-impl Mul for UnitList {
+impl Mul for Units {
     type Output = Self;
 
     fn mul(mut self, rhs: Self) -> Self::Output {
@@ -129,13 +129,13 @@ impl Mul for UnitList {
     }
 }
 
-impl MulAssign for UnitList {
+impl MulAssign for Units {
     fn mul_assign(&mut self, rhs: Self) {
         self.0.extend(rhs.0);
     }
 }
 
-impl Div for UnitList {
+impl Div for Units {
     type Output = Self;
 
     fn div(mut self, rhs: Self) -> Self::Output {
@@ -144,7 +144,7 @@ impl Div for UnitList {
     }
 }
 
-impl DivAssign for UnitList {
+impl DivAssign for Units {
     fn div_assign(&mut self, rhs: Self) {
         for mut unit in rhs.0 {
             if self.0.contains(&unit) {
@@ -158,7 +158,7 @@ impl DivAssign for UnitList {
     }
 }
 
-impl<T> From<T> for UnitList
+impl<T> From<T> for Units
 where
     T: IntoIterator<Item = Unit>,
 {
@@ -167,7 +167,7 @@ where
     }
 }
 
-impl Display for UnitList {
+impl Display for Units {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.0.len() == 2
             && ((self.0[0].exponent == 1 && self.0[1].exponent == -1)
@@ -196,8 +196,8 @@ mod tests {
     use super::*;
     use crate::rat_util_macros::rat;
 
-    fn newton_parts() -> UnitList {
-        UnitList::from([
+    fn newton_parts() -> Units {
+        Units::from([
             Unit {
                 name: String::from("m"),
                 exponent: 1,
@@ -222,8 +222,8 @@ mod tests {
         ])
     }
 
-    fn newton() -> UnitList {
-        UnitList::from([Unit {
+    fn newton() -> Units {
+        Units::from([Unit {
             name: String::from("N"),
             exponent: 1,
             scale: rat!(1),
@@ -232,14 +232,14 @@ mod tests {
         }])
     }
 
-    /// Tests collecting a [UnitList]'s dimensions into one dimension.
+    /// Tests collecting a [Units]'s dimensions into one dimension.
     /// Conveniently also tests the multiplication and exponentiation functions
     /// for [Dimensions][Dimension].
     ///
     /// [1]: crate::dimension::Dimension::Mul::mul
     /// [2]: crate::dimension::Dimension::exp
     #[test]
-    fn unitlist_dimension() {
+    fn units_dimension() {
         let newton = newton_parts();
         assert_eq!(newton.dimension(), Dimension::from([1, 1, -2]));
     }
@@ -256,15 +256,15 @@ mod tests {
     /// Tests checking of dimensionlessness
     #[test]
     fn dimensionless() {
-        let a = UnitList::new();
-        let b = UnitList::from([Unit {
+        let a = Units::new();
+        let b = Units::from([Unit {
             name: String::new(),
             exponent: 1,
             scale: rat!(1),
             offset: rat!(0),
             dimension: Dimension::new(),
         }]);
-        let c = UnitList::from([Unit {
+        let c = Units::from([Unit {
             name: String::new(),
             exponent: 0,
             scale: rat!(1),
@@ -278,7 +278,7 @@ mod tests {
 
     macro_rules! units {
         ( $( $a:tt, $b:literal),* ) => {
-            UnitList(vec![
+            Units(vec![
                 $(Unit {
                     name: stringify!($a).to_string(),
                     exponent: $b,
@@ -290,10 +290,10 @@ mod tests {
         };
     }
 
-    /// Tests [Display] implementation for [UnitList]
+    /// Tests [Display] implementation for [Units]
     #[test]
-    fn unitlist_display() {
-        let tests: Vec<(UnitList, &str)> = vec![
+    fn units_display() {
+        let tests: Vec<(Units, &str)> = vec![
             (units!(m, 1, s, -1), "m/s"),
             (units!(m, 1), "m"),
             (units!(m, 2, s, -1), "m^2 s^-1"),

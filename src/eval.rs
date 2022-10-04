@@ -26,7 +26,7 @@ use std::{collections::HashMap, ops::Neg};
 use num::{BigRational, ToPrimitive, Zero};
 use thiserror::Error;
 
-use crate::{ast::*, operation::Operation, runtime::Runtime, unit::UnitList};
+use crate::{ast::*, operation::Operation, runtime::Runtime, unit::Units};
 
 pub(crate) trait Operable {
     fn binary_op(self, op: Operation, rhs: Value) -> Result<Value, EvalError>;
@@ -312,7 +312,7 @@ pub enum EvalError {
     InvalidBinaryOperation(Value, Value, Operation),
 
     #[error("Cannot add units that describe different quantities: {0} and {1}")]
-    AddNonConformingUnits(UnitList, UnitList),
+    AddNonConformingUnits(Units, Units),
 
     #[error("Expected {0} operation, found {1} operation `{2}`")]
     ExpectedOperation(&'static str, &'static str, Operation),
@@ -350,7 +350,7 @@ mod tests {
             "size".to_string(),
             Quantity {
                 mag: value.clone(),
-                units: UnitList::new(),
+                units: Units::new(),
             }
             .into(),
         );

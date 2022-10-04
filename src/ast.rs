@@ -26,7 +26,7 @@ use std::fmt::{self, Display};
 use num::BigRational;
 use thiserror::Error;
 
-use crate::{operation::Operation, unit::UnitList};
+use crate::{operation::Operation, unit::Units};
 
 /// Represents a quantity
 ///
@@ -34,7 +34,7 @@ use crate::{operation::Operation, unit::UnitList};
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Quantity {
     pub(crate) mag: BigRational,
-    pub(crate) units: UnitList,
+    pub(crate) units: Units,
 }
 
 impl Quantity {
@@ -209,7 +209,7 @@ mod tests {
         assert_eq!(
             Value::Quantity(Quantity {
                 mag: BigRational::default(),
-                units: UnitList::new()
+                units: Units::new()
             })
             .to_string(),
             "quantity"
