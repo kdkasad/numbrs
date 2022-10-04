@@ -176,8 +176,19 @@ impl Mul for Units {
 }
 
 impl MulAssign for Units {
+    #[allow(clippy::suspicious_op_assign_impl)]
     fn mul_assign(&mut self, rhs: Self) {
-        self.0.extend(rhs.0);
+        for unit in rhs.0 {
+            if let Some(idx) = self
+                .0
+                .iter()
+                .position(|x| x.name == unit.name && x.dimension == unit.dimension)
+            {
+                self.0[idx].exponent += unit.exponent;
+            } else {
+                self.0.push(unit);
+            }
+        }
     }
 }
 
