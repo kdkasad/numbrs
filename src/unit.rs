@@ -399,4 +399,80 @@ mod tests {
             assert_eq!(units.to_string(), expectation);
         }
     }
+
+    /// Test division of [Units]
+    #[test]
+    fn units_division() {
+        let mut a = Units(vec![Unit {
+            name: "m".to_string(),
+            exponent: 2,
+            scale: rat!(1),
+            offset: rat!(0),
+            dimension: Dimension::from([1, 0, 0]),
+        }]);
+
+        let b = Units(vec![Unit {
+            name: "m".to_string(),
+            exponent: 1,
+            scale: rat!(1),
+            offset: rat!(0),
+            dimension: Dimension::from([1, 0, 0]),
+        }]);
+
+        a /= b.clone();
+
+        let expected_result = Units(vec![Unit {
+            name: "m".to_string(),
+            exponent: 1,
+            scale: rat!(1),
+            offset: rat!(0),
+            dimension: Dimension::from([1, 0, 0]),
+        }]);
+
+        assert_eq!(a, expected_result);
+
+        a = Units(vec![
+            Unit {
+                name: "m".to_string(),
+                exponent: 1,
+                scale: rat!(1),
+                offset: rat!(0),
+                dimension: Dimension::from([1, 0, 0]),
+            },
+            Unit {
+                name: "m".to_string(),
+                exponent: 1,
+                scale: rat!(1),
+                offset: rat!(0),
+                dimension: Dimension::from([1, 0, 0]),
+            },
+        ]);
+
+        a /= b;
+
+        assert_eq!(a, expected_result);
+    }
+
+    /// Test conversion of pure quantities
+    #[test]
+    fn convert_pure() {
+        let a = Units::from([Unit::new(
+            "a".to_string(),
+            1,
+            rat!(5),
+            rat!(0),
+            Dimension::default(),
+        )]);
+        let b = Units::from([Unit::new(
+            "b".to_string(),
+            1,
+            rat!(3),
+            rat!(0),
+            Dimension::default(),
+        )]);
+
+        let mut val = rat!(3);
+        val = convert(&val, &a, &b).unwrap();
+        assert_eq!(val, rat!(5));
+    }
 }
