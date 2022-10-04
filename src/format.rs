@@ -53,6 +53,7 @@ impl Formatter for Value {
         match self {
             Value::Number(rat) => rat.format(precision),
             Value::Quantity(q) => q.format(precision),
+            Value::Unit(units) => units.to_string(),
         }
     }
 }

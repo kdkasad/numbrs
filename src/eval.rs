@@ -30,7 +30,7 @@ use crate::{
     ast::*,
     operation::Operation,
     runtime::Runtime,
-    unit::{Units, self},
+    unit::{self, Units},
 };
 
 pub(crate) trait Operable {
@@ -75,6 +75,17 @@ impl Operable for BigRational {
                     rhs.mag /= self;
                     Ok(rhs.into())
                 }
+                Assign | UnaryAdd | UnarySubtract => unreachable!(),
+            },
+            Value::Unit(rhs) => match op {
+                Multiply => Ok(Quantity::new(self, rhs).into()),
+                Divide => Ok(Quantity::new(self.recip(), rhs).into()),
+                Add | Subtract => Err(EvalError::InvalidBinaryOperation(
+                    self.into(),
+                    rhs.into(),
+                    op,
+                )),
+                Raise => Err(EvalError::NonIntegerExponent(rhs.into())),
                 Assign | UnaryAdd | UnarySubtract => unreachable!(),
             },
         }
@@ -172,6 +183,23 @@ impl Operable for Quantity {
 
                 UnaryAdd | UnarySubtract | Assign => unreachable!(),
             },
+            Value::Unit(rhs) => match op {
+                Multiply => {
+                    self.units *= rhs;
+                    Ok(self.into())
+                }
+                Divide => {
+                    self.units /= rhs;
+                    Ok(self.into())
+                }
+                Add | Subtract => Err(EvalError::InvalidBinaryOperation(
+                    self.into(),
+                    rhs.into(),
+                    op,
+                )),
+                Raise => Err(EvalError::NonIntegerExponent(rhs.into())),
+                UnaryAdd | UnarySubtract | Assign => unreachable!(),
+            },
         }
     }
 
@@ -195,6 +223,7 @@ impl Operable for Value {
         match self {
             Value::Number(lhs) => lhs.binary_op(op, rhs),
             Value::Quantity(lhs) => lhs.binary_op(op, rhs),
+            Value::Unit(lhs) => lhs.binary_op(op, rhs),
         }
     }
 
@@ -202,7 +231,80 @@ impl Operable for Value {
         match self {
             Value::Number(operand) => operand.unary_op(op),
             Value::Quantity(operand) => operand.unary_op(op),
+            Value::Unit(operand) => operand.unary_op(op),
         }
+    }
+}
+
+impl Operable for Units {
+    fn binary_op(mut self, op: Operation, rhs: Value) -> Result<Value, EvalError> {
+        use Operation::*;
+
+        if let UnaryAdd | UnarySubtract = op {
+            return Err(EvalError::ExpectedOperation("binary", "unary", op));
+        }
+
+        if let Assign = op {
+            return Err(EvalError::InvalidAssignmentLHS);
+        }
+
+        match rhs {
+            Value::Quantity(mut rhs) => match op {
+                Multiply => rhs.binary_op(op, self.into()), // delegate to Quantity * Unit
+                Divide => {
+                    rhs.mag = rhs.mag.recip();
+                    rhs.units.pow_assign(-1);
+                    rhs.units *= self;
+                    Ok(rhs.into())
+                }
+                Add | Subtract => Err(EvalError::InvalidBinaryOperation(
+                    self.into(),
+                    rhs.into(),
+                    op,
+                )),
+                Raise => Err(EvalError::NonIntegerExponent(rhs.into())),
+                Assign | UnaryAdd | UnarySubtract => unreachable!(),
+            },
+            Value::Number(rhs) => match op {
+                Raise => {
+                    if rhs.is_integer() {
+                        if let Some(exp) = rhs.to_i32() {
+                            self.pow_assign(exp);
+                            Ok(self.into())
+                        } else {
+                            Err(EvalError::NonIntegerExponent(rhs.into()))
+                        }
+                    } else {
+                        Err(EvalError::NonIntegerExponent(rhs.into()))
+                    }
+                }
+                Multiply => Ok(Quantity::new(rhs, self).into()),
+                Divide => Ok(Quantity::new(rhs.recip(), self).into()),
+
+                Add | Subtract => Err(EvalError::InvalidBinaryOperation(
+                    self.into(),
+                    rhs.into(),
+                    op,
+                )),
+                Assign | UnaryAdd | UnarySubtract => unreachable!(),
+            },
+            Value::Unit(rhs) => match op {
+                Multiply => Ok(Value::from(self * rhs)),
+                Divide => Ok(Value::from(self / rhs)),
+                Add | Subtract => Err(EvalError::InvalidBinaryOperation(
+                    self.into(),
+                    rhs.into(),
+                    op,
+                )),
+                Raise => Err(EvalError::NonIntegerExponent(rhs.into())),
+                Assign | UnaryAdd | UnarySubtract => unreachable!(),
+            },
+        }
+    }
+
+    fn unary_op(self, op: Operation) -> Result<Value, EvalError> {
+        // Unary operations don't make sense on unit types
+        Err(EvalError::InvalidUnaryOperation(self.into(), op))
     }
 }
 
@@ -330,6 +432,9 @@ pub enum EvalError {
 
     #[error("Invalid LHS for assignment operation")]
     InvalidAssignmentLHS,
+
+    #[error("Invalid unary operation `{1}` for type `{0}`")]
+    InvalidUnaryOperation(Value, Operation),
 }
 
 #[cfg(test)]

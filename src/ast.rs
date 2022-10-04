@@ -119,6 +119,7 @@ impl BinaryExpression {
 pub enum Value {
     Quantity(Quantity),
     Number(BigRational),
+    Unit(Units),
 }
 
 impl TryFrom<Node> for Value {
@@ -142,6 +143,12 @@ impl From<Quantity> for Value {
 impl From<BigRational> for Value {
     fn from(src: BigRational) -> Self {
         Value::Number(src)
+    }
+}
+
+impl From<Units> for Value {
+    fn from(src: Units) -> Self {
+        Value::Unit(src)
     }
 }
 

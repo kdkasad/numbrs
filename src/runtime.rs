@@ -76,7 +76,9 @@ impl Runtime {
                         Err(RuntimeError::InvalidPrecision(prec.clone()))
                     }
                 }
-                Value::Quantity(_) => Err(RuntimeError::InvalidPrecision(prec.clone())),
+                Value::Quantity(_) | Value::Unit(_) => {
+                    Err(RuntimeError::InvalidPrecision(prec.clone()))
+                }
             },
             None => Ok(value.format(Self::DEFAULT_PRECISION)),
         }
