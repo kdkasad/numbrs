@@ -155,7 +155,7 @@ impl Operable for Quantity {
                 Raise => {
                     if rhs.is_integer() {
                         if let Some(exp) = rhs.to_i32() {
-                            self.units.exp_assign(exp);
+                            self.units.pow_assign(exp);
                             Ok(self.into())
                         } else {
                             Err(EvalError::NonIntegerExponent(rhs.into()))
