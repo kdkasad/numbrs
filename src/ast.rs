@@ -161,15 +161,6 @@ pub enum Node {
     Quantity(Quantity),
 }
 
-impl From<Value> for Node {
-    fn from(value: Value) -> Node {
-        match value {
-            Value::Quantity(q) => Node::from(q),
-            Value::Number(n) => Node::from(n),
-        }
-    }
-}
-
 impl From<BigRational> for Node {
     fn from(rat: BigRational) -> Node {
         Node::Number(rat)
