@@ -353,11 +353,7 @@ mod tests {
         let value = rat!(1);
         env.insert(
             "size".to_string(),
-            Quantity {
-                mag: value.clone(),
-                units: Units::new(),
-            }
-            .into(),
+            Quantity::new(value.clone(), Units::new()).into(),
         );
         let var = Variable::from("size");
         let result = var.eval(&env).unwrap();

@@ -46,6 +46,11 @@ impl Quantity {
     pub fn is_value(&self) -> bool {
         self.units.is_dimensionless()
     }
+
+    /// Create a new [Quantity].
+    pub fn new(mag: BigRational, units: Units) -> Self {
+        Self { mag, units }
+    }
 }
 
 impl Display for Quantity {
@@ -198,11 +203,7 @@ mod tests {
     fn value_repr() {
         assert_eq!(Value::Number(BigRational::default()).to_string(), "number");
         assert_eq!(
-            Value::Quantity(Quantity {
-                mag: BigRational::default(),
-                units: Units::new()
-            })
-            .to_string(),
+            Value::Quantity(Quantity::new(BigRational::default(), Units::new())).to_string(),
             "quantity"
         );
     }
