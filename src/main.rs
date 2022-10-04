@@ -75,6 +75,11 @@ fn main() {
                     continue;
                 }
 
+                // Ignore comments
+                if let Some('#') = line.chars().next() {
+                    continue;
+                }
+
                 match rt.evaluate(&line) {
                     Ok(value) => match rt.format(&value) {
                         Ok(output) => println!("{}", output),
