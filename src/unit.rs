@@ -69,6 +69,28 @@ impl Unit {
     pub fn conforms_to(&self, other: &Self) -> bool {
         self.dimension == other.dimension
     }
+
+    /// Creates an new unit
+    pub fn new<T: ToString>(
+        name: T,
+        exponent: i32,
+        scale: BigRational,
+        offset: BigRational,
+        dimension: Dimension,
+    ) -> Self {
+        Self {
+            name: name.to_string(),
+            exponent,
+            scale,
+            offset,
+            dimension,
+        }
+    }
+
+    /// Get the dimension of a unit
+    pub fn dimension(&self) -> Dimension {
+        self.dimension
+    }
 }
 
 impl Display for Unit {
