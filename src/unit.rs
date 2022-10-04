@@ -46,7 +46,7 @@ use std::{
 
 use num::BigRational;
 
-use crate::dimension::Dimension;
+use crate::{dimension::Dimension, eval::EvalError, rat_util_macros::rat};
 
 /// Unit of measurement.
 ///
@@ -118,6 +118,52 @@ impl Units {
     pub fn pow_assign(&mut self, exp: i32) {
         self.0.iter_mut().for_each(|mut unit| unit.exponent *= exp);
     }
+
+    /// Multiply a [BigRational] times the combined scales of the units
+    pub fn scale(&self, n: &BigRational) -> BigRational {
+        if self.0.is_empty() {
+            return n.clone();
+        }
+
+        let mut result = n.clone();
+        if self.0.len() == 1 && self.0[0].exponent == 1 {
+            let unit = &self.0[0];
+            result += &unit.offset;
+            result *= &unit.scale;
+        } else {
+            for unit in &self.0 {
+                result *= unit.scale.pow(unit.exponent);
+            }
+        }
+        result
+    }
+
+    /// Inverse of the [`Self::scale()`] function.
+    pub fn descale(&self, n: &BigRational) -> BigRational {
+        if self.0.is_empty() {
+            return n.clone();
+        }
+
+        let mut result = n.clone();
+        if self.0.len() == 1 && self.0[0].exponent == 1 {
+            let unit = &self.0[0];
+            result /= &unit.scale;
+            result -= &unit.offset;
+        } else {
+            for unit in &self.0 {
+                result /= unit.scale.pow(unit.exponent);
+            }
+        }
+        result
+    }
+
+    pub fn aggregate_scales(&self) -> BigRational {
+        let mut result = rat!(1);
+        for unit in &self.0 {
+            result *= unit.scale.pow(unit.exponent);
+        }
+        result
+    }
 }
 
 impl Mul for Units {
@@ -186,6 +232,18 @@ impl Display for Units {
                     .join(" ")
             )
         }
+    }
+}
+
+/// Convert a magnitude between two conforming units.
+pub fn convert(n: &BigRational, from: &Units, to: &Units) -> Result<BigRational, EvalError> {
+    if !from.conforms_to(to) {
+        Err(EvalError::ConvertNonConformingUnits(
+            from.clone(),
+            to.clone(),
+        ))
+    } else {
+        Ok(to.descale(&from.scale(n)))
     }
 }
 

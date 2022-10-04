@@ -45,7 +45,7 @@ pub(crate) enum BaseQuantity {
 /// Specifies a dimension of measure for units by storing an array of exponents
 /// indexed by base quantities.
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub(crate) struct Dimension([i32; BaseQuantity::COUNT]);
+pub struct Dimension([i32; BaseQuantity::COUNT]);
 
 impl Dimension {
     /// Test whether the dimension is pure.

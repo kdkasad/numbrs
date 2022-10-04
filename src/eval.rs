@@ -26,7 +26,12 @@ use std::{collections::HashMap, ops::Neg};
 use num::{BigRational, ToPrimitive, Zero};
 use thiserror::Error;
 
-use crate::{ast::*, operation::Operation, runtime::Runtime, unit::Units};
+use crate::{
+    ast::*,
+    operation::Operation,
+    runtime::Runtime,
+    unit::{Units, self},
+};
 
 pub(crate) trait Operable {
     fn binary_op(self, op: Operation, rhs: Value) -> Result<Value, EvalError>;
@@ -107,7 +112,9 @@ impl Operable for Quantity {
                 match op {
                     Add | Subtract => {
                         if !self.units.conforms_to(&rhs.units) {
-                            return Err(EvalError::AddNonConformingUnits(self.units, rhs.units));
+                            return Err(EvalError::ConvertNonConformingUnits(
+                                self.units, rhs.units,
+                            ));
                         }
                     }
                     Raise => return Err(EvalError::NonIntegerExponent(rhs.into())),
@@ -118,10 +125,10 @@ impl Operable for Quantity {
                 // Perform operations for valid cases
                 match op {
                     Add => {
-                        self.mag += rhs.mag;
+                        self.mag += unit::convert(&rhs.mag, &rhs.units, &self.units)?;
                     }
                     Subtract => {
-                        self.mag -= rhs.mag;
+                        self.mag -= unit::convert(&rhs.mag, &rhs.units, &self.units)?;
                     }
                     Multiply => {
                         self.units *= rhs.units;
@@ -311,8 +318,8 @@ pub enum EvalError {
     #[error("Invalid operation `{2}` for types {0} and {1}")]
     InvalidBinaryOperation(Value, Value, Operation),
 
-    #[error("Cannot add units that describe different quantities: {0} and {1}")]
-    AddNonConformingUnits(Units, Units),
+    #[error("Cannot convert between units that describe different quantities: `{0}` and `{1}`")]
+    ConvertNonConformingUnits(Units, Units),
 
     #[error("Expected {0} operation, found {1} operation `{2}`")]
     ExpectedOperation(&'static str, &'static str, Operation),
