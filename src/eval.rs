@@ -46,6 +46,10 @@ impl Operable for BigRational {
             return Err(EvalError::InvalidAssignmentLHS);
         }
 
+        if let UnaryAdd | UnarySubtract = op {
+            return Err(EvalError::ExpectedOperation("binary", "unary", op));
+        }
+
         match rhs {
             Value::Number(rhs) => Ok(match op {
                 Add => self + rhs,
@@ -53,10 +57,7 @@ impl Operable for BigRational {
                 Multiply => self * rhs,
                 Divide => self / rhs,
                 Raise => bigrational_pow(self, rhs)?,
-                UnaryAdd | UnarySubtract => {
-                    panic!("Unary operation provided where binary operation was expected")
-                }
-                Assign => unreachable!(),
+                Assign | UnaryAdd | UnarySubtract => unreachable!(),
             }
             .into()),
             Value::Quantity(mut rhs) => match op {
@@ -74,10 +75,7 @@ impl Operable for BigRational {
                     rhs.mag /= self;
                     Ok(rhs.into())
                 }
-                UnaryAdd | UnarySubtract => {
-                    panic!("Unary operation provided where binary operation was expected")
-                }
-                Assign => unreachable!(),
+                Assign | UnaryAdd | UnarySubtract => unreachable!(),
             },
         }
     }
@@ -88,7 +86,7 @@ impl Operable for BigRational {
             UnaryAdd => Ok(self.into()),
             UnarySubtract => Ok(self.neg().into()),
             Add | Subtract | Multiply | Divide | Raise | Assign => {
-                panic!("Binary operation provided where unary operation was expected")
+                Err(EvalError::ExpectedOperation("unary", "binary", op))
             }
         }
     }
@@ -99,7 +97,7 @@ impl Operable for Quantity {
         use Operation::*;
 
         if let UnaryAdd | UnarySubtract = op {
-            panic!("Unary operation provided where binary operation was expected");
+            return Err(EvalError::ExpectedOperation("binary", "unary", op));
         }
 
         if let Assign = op {
