@@ -28,9 +28,11 @@ use thiserror::Error;
 
 use crate::{
     ast::*,
+    dimension::Dimension,
     operation::Operation,
+    rat_util_macros::rat,
     runtime::Runtime,
-    unit::{self, Units},
+    unit::{self, Unit, Units},
 };
 
 pub(crate) trait Operable {
@@ -42,7 +44,7 @@ impl Operable for BigRational {
     fn binary_op(self, op: Operation, rhs: Value) -> Result<Value, EvalError> {
         use Operation::*;
 
-        if let Assign = op {
+        if let Assign | AssignUnit = op {
             return Err(EvalError::InvalidAssignmentLHS);
         }
 
@@ -57,7 +59,7 @@ impl Operable for BigRational {
                 Multiply => self * rhs,
                 Divide => self / rhs,
                 Raise => bigrational_pow(self, rhs)?,
-                Assign | UnaryAdd | UnarySubtract => unreachable!(),
+                Assign | AssignUnit | UnaryAdd | UnarySubtract => unreachable!(),
             }
             .into()),
             Value::Quantity(mut rhs) => match op {
@@ -75,7 +77,7 @@ impl Operable for BigRational {
                     rhs.mag /= self;
                     Ok(rhs.into())
                 }
-                Assign | UnaryAdd | UnarySubtract => unreachable!(),
+                Assign | AssignUnit | UnaryAdd | UnarySubtract => unreachable!(),
             },
             Value::Unit(rhs) => match op {
                 Multiply => Ok(Quantity::new(self, rhs).into()),
@@ -86,7 +88,7 @@ impl Operable for BigRational {
                     op,
                 )),
                 Raise => Err(EvalError::NonIntegerExponent(rhs.into())),
-                Assign | UnaryAdd | UnarySubtract => unreachable!(),
+                Assign | AssignUnit | UnaryAdd | UnarySubtract => unreachable!(),
             },
         }
     }
@@ -96,7 +98,7 @@ impl Operable for BigRational {
         match op {
             UnaryAdd => Ok(self.into()),
             UnarySubtract => Ok(self.neg().into()),
-            Add | Subtract | Multiply | Divide | Raise | Assign => {
+            Add | Subtract | Multiply | Divide | Raise | Assign | AssignUnit => {
                 Err(EvalError::ExpectedOperation("unary", "binary", op))
             }
         }
@@ -111,7 +113,7 @@ impl Operable for Quantity {
             return Err(EvalError::ExpectedOperation("binary", "unary", op));
         }
 
-        if let Assign = op {
+        if let Assign | AssignUnit = op {
             return Err(EvalError::InvalidAssignmentLHS);
         }
 
@@ -128,7 +130,7 @@ impl Operable for Quantity {
                     }
                     Raise => return Err(EvalError::NonIntegerExponent(rhs.into())),
                     Multiply | Divide => (), // valid case, do nothing
-                    UnaryAdd | UnarySubtract | Assign => unreachable!(),
+                    UnaryAdd | UnarySubtract | Assign | AssignUnit => unreachable!(),
                 }
 
                 // Perform operations for valid cases
@@ -147,7 +149,7 @@ impl Operable for Quantity {
                         self.units /= rhs.units;
                         self.mag /= rhs.mag;
                     }
-                    Raise | UnaryAdd | UnarySubtract | Assign => unreachable!(),
+                    Raise | UnaryAdd | UnarySubtract | Assign | AssignUnit => unreachable!(),
                 }
                 Ok(self.into())
             }
@@ -181,7 +183,7 @@ impl Operable for Quantity {
                     }
                 }
 
-                UnaryAdd | UnarySubtract | Assign => unreachable!(),
+                UnaryAdd | UnarySubtract | Assign | AssignUnit => unreachable!(),
             },
             Value::Unit(rhs) => match op {
                 Multiply => {
@@ -198,7 +200,7 @@ impl Operable for Quantity {
                     op,
                 )),
                 Raise => Err(EvalError::NonIntegerExponent(rhs.into())),
-                UnaryAdd | UnarySubtract | Assign => unreachable!(),
+                UnaryAdd | UnarySubtract | Assign | AssignUnit => unreachable!(),
             },
         }
     }
@@ -211,7 +213,7 @@ impl Operable for Quantity {
                 self.mag = -self.mag;
                 Ok(self.into())
             }
-            Add | Subtract | Multiply | Divide | Raise | Assign => {
+            Add | Subtract | Multiply | Divide | Raise | Assign | AssignUnit => {
                 Err(EvalError::ExpectedOperation("unary", "binary", op))
             }
         }
@@ -244,7 +246,7 @@ impl Operable for Units {
             return Err(EvalError::ExpectedOperation("binary", "unary", op));
         }
 
-        if let Assign = op {
+        if let Assign | AssignUnit = op {
             return Err(EvalError::InvalidAssignmentLHS);
         }
 
@@ -263,7 +265,7 @@ impl Operable for Units {
                     op,
                 )),
                 Raise => Err(EvalError::NonIntegerExponent(rhs.into())),
-                Assign | UnaryAdd | UnarySubtract => unreachable!(),
+                Assign | AssignUnit | UnaryAdd | UnarySubtract => unreachable!(),
             },
             Value::Number(rhs) => match op {
                 Raise => {
@@ -286,7 +288,7 @@ impl Operable for Units {
                     rhs.into(),
                     op,
                 )),
-                Assign | UnaryAdd | UnarySubtract => unreachable!(),
+                Assign | AssignUnit | UnaryAdd | UnarySubtract => unreachable!(),
             },
             Value::Unit(rhs) => match op {
                 Multiply => Ok(Value::from(self * rhs)),
@@ -297,7 +299,7 @@ impl Operable for Units {
                     op,
                 )),
                 Raise => Err(EvalError::NonIntegerExponent(rhs.into())),
-                Assign | UnaryAdd | UnarySubtract => unreachable!(),
+                Assign | AssignUnit | UnaryAdd | UnarySubtract => unreachable!(),
             },
         }
     }
@@ -361,9 +363,10 @@ impl Node {
     pub fn eval(self, env: &mut HashMap<String, Value>) -> Result<Value, EvalError> {
         match self {
             Node::BinaryExpression(node) => {
-                if node.operation == Operation::Assign {
+                if let Operation::Assign | Operation::AssignUnit = node.operation {
+                    let unit = matches!(node.operation, Operation::AssignUnit);
                     if let Node::Variable(var) = *node.lhs {
-                        handle_assignment(var.name(), *node.rhs, env)
+                        handle_assignment(var.name(), *node.rhs, unit, env)
                     } else {
                         Err(EvalError::InvalidAssignmentLHS)
                     }
@@ -392,6 +395,7 @@ impl Node {
 fn handle_assignment<T>(
     name: T,
     rhs: Node,
+    unit: bool,
     env: &mut HashMap<String, Value>,
 ) -> Result<Value, EvalError>
 where
@@ -408,7 +412,29 @@ where
     }
 
     // Else, assign LHS and return value of RHS
-    let rval: Value = rhs.eval(env)?;
+    let mut rval: Value = rhs.eval(env)?;
+
+    // For unit assignments, coerce RHS to a new Unit
+    if unit {
+        rval = Value::from(Units::from([match rval {
+            Value::Quantity(q) => Unit::new(
+                name.clone(),
+                1,
+                q.mag * q.units.aggregate_scales(),
+                rat!(0),
+                q.units.dimension(),
+            ),
+            Value::Unit(units) => Unit::new(
+                name.clone(),
+                1,
+                units.aggregate_scales(),
+                rat!(0),
+                units.dimension(),
+            ),
+            Value::Number(rat) => Unit::new(name.clone(), 1, rat, rat!(0), Dimension::new()),
+        }]))
+    }
+
     env.insert(name, rval.clone());
     Ok(rval)
 }

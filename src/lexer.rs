@@ -116,6 +116,14 @@ impl Iterator for Lexer {
                     Some(Token::Ident(collect_chars(&mut self.chars, |c| {
                         c.is_alphabetic() || c == '_'
                     })))
+                } else if c == ':' {
+                    self.chars.next(); // consume ':'
+                    if let Some('=') = self.chars.peek() {
+                        self.chars.next(); // consume '='
+                        Some(Token::Operator(Operation::from_str(":=").unwrap()))
+                    } else {
+                        Some(Token::Illegal(c))
+                    }
                 } else {
                     // unrecognized character
                     // consume the character and return an illegal token

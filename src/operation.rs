@@ -42,6 +42,8 @@ pub enum Operation {
 
     #[strum(serialize = "=")]
     Assign,
+    #[strum(serialize = ":=")]
+    AssignUnit,
 
     #[strum(serialize = "+")]
     UnaryAdd,
@@ -62,7 +64,7 @@ impl Operation {
     pub fn is_binary(self) -> bool {
         use Operation::*;
         match self {
-            Add | Subtract | Multiply | Divide | Raise | Assign => true,
+            Add | Subtract | Multiply | Divide | Raise | Assign | AssignUnit => true,
             UnaryAdd | UnarySubtract => false,
         }
     }
@@ -94,6 +96,7 @@ mod tests {
         assert_eq!(Operation::UnaryAdd.to_string(), "+");
         assert_eq!(Operation::UnarySubtract.to_string(), "-");
         assert_eq!(Operation::Assign.to_string(), "=");
+        assert_eq!(Operation::AssignUnit.to_string(), ":=");
     }
 
     #[test]

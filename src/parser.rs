@@ -130,7 +130,7 @@ impl BindingPower for Operation {
     fn infix_binding_power(&self) -> (u32, u32) {
         use Operation::*;
         match self {
-            Assign => (10, 1),
+            Assign | AssignUnit => (10, 1),
             Add | Subtract => (3, 4),
             Multiply | Divide => (5, 6),
             Raise => (7, 8),
@@ -144,8 +144,8 @@ impl BindingPower for Operation {
         use Operation::*;
         match self {
             UnaryAdd | UnarySubtract => todo!(),
-            Add | Subtract | Multiply | Divide | Raise | Assign => {
-                panic!("Expected (unary) prefix operator, got binary operator")
+            Add | Subtract | Multiply | Divide | Raise | Assign | AssignUnit => {
+                panic!("Expected (unary) prefix operator, got (binary) infix operator")
             }
         }
     }
