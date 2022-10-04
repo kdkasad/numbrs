@@ -196,8 +196,14 @@ impl DivAssign for Units {
             if self.0.contains(&unit) {
                 self.0
                     .remove(self.0.iter().position(|x| *x == unit).unwrap());
+            } else if let Some(idx) = self
+                .0
+                .iter()
+                .position(|x| x.name == unit.name && x.dimension == unit.dimension)
+            {
+                self.0[idx].exponent -= unit.exponent;
             } else {
-                unit.dimension = unit.dimension.pow(-1);
+                unit.exponent = -unit.exponent;
                 self.0.push(unit);
             }
         }
