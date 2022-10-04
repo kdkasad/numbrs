@@ -121,15 +121,6 @@ pub enum Value {
     Number(BigRational),
 }
 
-impl Value {
-    pub fn magnitude(&self) -> &BigRational {
-        match self {
-            Value::Quantity(q) => &q.mag,
-            Value::Number(n) => n,
-        }
-    }
-}
-
 impl TryFrom<Node> for Value {
     type Error = Error;
 

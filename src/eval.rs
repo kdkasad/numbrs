@@ -348,7 +348,10 @@ mod tests {
         let value = BigRational::zero();
         env.insert("zero".to_string(), value.clone().into());
         let var = Variable::from("zero");
-        assert_eq!(*var.eval(&env).unwrap().magnitude(), value);
+        match var.eval(&env).unwrap() {
+            Value::Number(rat) => assert_eq!(rat, value),
+            _ => panic!("Unexpected Value variant"),
+        }
 
         let value = rat!(1);
         env.insert(
