@@ -87,12 +87,12 @@ impl Parser {
             let mut implicit = false;
             let op: Operation = match *tok {
                 Token::Operator(op) => op,
-                Token::Ident(_) => {
+                Token::Ident(_) | Token::GroupBegin => {
                     implicit = true;
                     Operation::Multiply
                 }
                 Token::GroupEnd => break,
-                Token::Number(_) | Token::GroupBegin => {
+                Token::Number(_) => {
                     return Err(ParseError::ExpectedToken("operator", tok.into()))
                 }
                 Token::Illegal(c) => return Err(ParseError::IllegalToken(c)),
