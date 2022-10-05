@@ -24,14 +24,17 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 use std::collections::HashMap;
 
 use num::{BigRational, ToPrimitive, Zero};
+use strum::{IntoEnumIterator, VariantNames};
 
 use crate::{
     ast::{BinaryExpression, Node, UnaryExpression, Value},
+    dimension::{BaseQuantity, Dimension},
     eval::EvalError,
     format::Formatter,
     operation::Operation,
     parser::{ParseError, Parser},
     rat_util_macros::rat,
+    unit::{Unit, Units},
 };
 
 /// Execution runtime for Numbrs.
@@ -48,12 +51,15 @@ impl Runtime {
     pub const UNASSIGN_IDENT: &'static str = "_";
 
     pub fn new() -> Self {
-        let mut env = HashMap::new();
+        let mut env: HashMap<String, Value> = HashMap::new();
         env.insert(Self::UNASSIGN_IDENT.to_string(), BigRational::zero().into());
         env.insert(
             Self::PRECISION_IDENT.to_string(),
             rat!(Self::DEFAULT_PRECISION).into(),
         );
+
+        create_base_units(&mut env);
+
         Self { env }
     }
 
@@ -85,9 +91,25 @@ impl Runtime {
     }
 }
 
+/// Create a base unit for each base quantity
+fn create_base_units(env: &mut HashMap<String, Value>) {
+    for variant in BaseQuantity::iter() {
+        let name = variant.to_string();
+
+        let mut dimension = Dimension::new();
+        dimension[variant] = 1;
+
+        env.insert(
+            name.clone(),
+            Units::from(vec![Unit::new(name, 1, rat!(1), rat!(0), dimension)]).into(),
+        );
+    }
+}
+
 /// Check if an expression tree contains prohibited behavior.
 /// The list of prohibited behaviors currently includes:
 ///   - Assigning to the `_` variable
+///   - Assigning to any base unit
 fn check_for_prohibited_behavior(tree: &Node) -> Result<(), RuntimeError> {
     match tree {
         Node::BinaryExpression(BinaryExpression {
@@ -95,10 +117,12 @@ fn check_for_prohibited_behavior(tree: &Node) -> Result<(), RuntimeError> {
             lhs,
             rhs,
         }) => {
-            // Check for assignment to `_`
-            if let Operation::Assign = operation {
+            // Check for assignment to `_` or base units
+            if let Operation::Assign | Operation::AssignUnit = operation {
                 if let Node::Variable(var) = &**lhs {
-                    if var.name() == Runtime::UNASSIGN_IDENT {
+                    if var.name() == Runtime::UNASSIGN_IDENT
+                        || BaseQuantity::VARIANTS.contains(&var.name())
+                    {
                         return Err(RuntimeError::AssignmentProhibited(var.name().to_owned()));
                     }
                 }
@@ -174,23 +198,38 @@ mod tests {
     }
 
     #[test]
-    fn assign_underscore() {
+    fn assign_protected() {
         macro_rules! test {
-            ($rt:expr, $expr:literal) => {
+            ($rt:expr, $expr:expr, $varname:expr) => {
                 match $rt
                     .evaluate($expr)
                     .expect_err("Expression evaluation was successful")
                 {
                     RuntimeError::AssignmentProhibited(var) => {
-                        assert_eq!(var, Runtime::UNASSIGN_IDENT);
+                        assert_eq!(var, $varname);
                     }
                     _ => unreachable!(),
                 }
             };
         }
+
         let mut rt = Runtime::new();
-        test!(rt, "_ = 123");
-        test!(rt, "1 + _ = 123");
-        test!(rt, "a = _ = 17");
+
+        test!(rt, "_ = 123", "_");
+        test!(rt, "1 + _ = 123", "_");
+        test!(rt, "a = _ = 17", "_");
+
+        for bq in BaseQuantity::VARIANTS {
+            test!(rt, &format!("{} = _", bq), *bq);
+        }
+    }
+
+    #[test]
+    fn base_unit_creation() {
+        let rt = Runtime::new();
+        for variant in BaseQuantity::iter() {
+            let name = variant.to_string();
+            assert!(matches!(rt.env.get(&name), Some(Value::Unit(_))));
+        }
     }
 }

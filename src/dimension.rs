@@ -29,14 +29,15 @@ use std::{
 };
 
 use strum::{EnumCount, IntoEnumIterator};
-use strum_macros::{EnumCount as EnumCountMacro, EnumIter};
+use strum_macros::{Display, EnumCount as EnumCountMacro, EnumIter, EnumVariantNames};
 
 /// Base quantity/dimension type.
 ///
 /// Each variant represents a [basic physical dimension/quantity][1].
 ///
 /// [1]: https://en.wikipedia.org/wiki/Physical_quantity#Dimensions
-#[derive(Clone, Copy, PartialEq, Eq, EnumCountMacro, EnumIter)]
+#[derive(Clone, Copy, PartialEq, Eq, EnumCountMacro, EnumIter, EnumVariantNames, Display)]
+#[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
 pub(crate) enum BaseQuantity {
     Length,
     Mass,
