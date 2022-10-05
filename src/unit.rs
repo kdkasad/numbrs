@@ -41,7 +41,7 @@ use std::{
     fmt,
     fmt::Display,
     iter::IntoIterator,
-    ops::{Div, DivAssign, Mul, MulAssign},
+    ops::{Deref, DerefMut, Div, DivAssign, Mul, MulAssign},
 };
 
 use num::BigRational;
@@ -106,6 +106,22 @@ impl Display for Unit {
 /// Wrapper type for a list of units
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Units(Vec<Unit>);
+
+// Allow dereferencing the units object to reach the underlying vector
+impl Deref for Units {
+    type Target = Vec<Unit>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+// Same as above but mutable
+impl DerefMut for Units {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
 impl Units {
     /// Calculate the dimension of a list of units.
