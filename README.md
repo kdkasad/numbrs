@@ -87,6 +87,29 @@ For example, `1 + 2 * 3 + 4` is equivalent to `(1 + (2 * 3)) + 4`.
 and 1 on the right side. This means `a + b = c + d` is equivalent to
 `a * (b = (c + d))`.
 
+#### Unary (prefix) operators
+
+Unary operators support one operand and are specified in prefix notation.  
+Example:
+
+	$ numbrs
+	> -1
+	-1
+	> 2 * -3
+	-6
+
+| Operator | Operation | Precedence |
+| ---      | ---       | ---        |
+| `+`      | Add       | 11         |
+| `-`      | Subtract  | 11         |
+
+Both unary additions and subtractions use 0 as the LHS, so `-4` is equivalent to
+`0 - 4`.
+
+All prefix operators have higher precedence than all infix operators, so
+`-4 <operator> 2` will always result in `(-4) <operator> 2` and not
+`-(4 <operator> 2)`. 
+
 ### Variables
 
 Values can be stored in variables. Variable names can contain letters, numbers,
