@@ -49,7 +49,6 @@ pub fn resolve_unit(name: &str, env: &HashMap<String, Value>) -> Option<Unit> {
             let mut new_name = String::with_capacity(name.len());
             new_name.push_str(part);
             new_name.push_str(sub);
-            eprintln!("Trying: {}", new_name);
             if let Some(unit) = try_get_unit(&new_name, env) {
                 return Some(unit);
             }

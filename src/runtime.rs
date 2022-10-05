@@ -73,7 +73,6 @@ impl Runtime {
             .lines()
             .filter(|line| !line.is_empty() && !matches!(line.chars().next(), Some('#')));
         for line in lines {
-            eprintln!("Loading default: {}", line);
             self.evaluate(line)?;
         }
         Ok(())
