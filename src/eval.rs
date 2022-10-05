@@ -36,7 +36,7 @@ use crate::{
     unit::{self, Unit, Units},
 };
 
-pub(crate) trait Operable {
+trait Operable {
     fn binary_op(self, op: Operation, rhs: Value) -> Result<Value, EvalError>;
     fn unary_op(self, op: Operation) -> Result<Value, EvalError>;
 }
