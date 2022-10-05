@@ -13,9 +13,13 @@ The goal of Numbrs is twofold:
   1. For me to learn and practice programming in Rust.
   2. To build a calculator which can handle the following features:
      - [x] Arithmetic
-	 - [ ] Bitwise operations
-	 - [ ] Number base conversion
-	 - [ ] Unit/quantity conversion
+     - [ ] Bitwise operations
+     - [ ] Number base conversion
+     - [ ] Unit/quantity conversion:
+        - [x] Define units
+        - [x] Create quantities
+        - [x] Perform arithmetic on quantities
+        - [ ] Convert quantities between units
 
 ## Installation
 
@@ -28,16 +32,16 @@ Cargo is used for this.
 Simply clone the Git repository or download a release tarball. Then run `cargo
 build --release` to build the program:
 
-	$ git clone https://github.com/kdkasad/numbrs
-	$ cd numbrs
-	$ cargo build --release
+    $ git clone https://github.com/kdkasad/numbrs
+    $ cd numbrs
+    $ cargo build --release
 
 ### Installing
 
 Once built, copy `target/release/numbrs` to a directory in your `PATH` and make
 it executable:
 
-	# install -m 755 target/release/numbrs /usr/local/bin/numbrs
+    # install -m 755 target/release/numbrs /usr/local/bin/numbrs
 
 ## Usage
 
@@ -53,22 +57,22 @@ Numbrs supports many operators which are used to perform operations on numbers.
 Parentheses, braces, and brackets are supported for grouping expressions.  
 Example:
 
-	$ numbrs
-	> (1 + 2) * 3 + 4
-	13
-	> (1 + 2) * [3 + 4]
-	21
-	> 1 + 2 * {3 + 4}
-	15
+    $ numbrs
+    > (1 + 2) * 3 + 4
+    13
+    > (1 + 2) * [3 + 4]
+    21
+    > 1 + 2 * {3 + 4}
+    15
 
 #### Binary operators
 
 Binary operators accept 2 operands using infix notation.  
 Example:
 
-	$ numbrs
-	> 1 + 2
-	3
+    $ numbrs
+    > 1 + 2
+    3
 
 | Operator | Operation       | Precedence | Associativity |
 | ---      | ---             | ---        | ---           |
@@ -92,11 +96,11 @@ and 1 on the right side. This means `a + b = c + d` is equivalent to
 Unary operators support one operand and are specified in prefix notation.  
 Example:
 
-	$ numbrs
-	> -1
-	-1
-	> 2 * -3
-	-6
+    $ numbrs
+    > -1
+    -1
+    > 2 * -3
+    -6
 
 | Operator | Operation | Precedence |
 | ---      | ---       | ---        |
@@ -134,22 +138,22 @@ to unassign/clear variables. When assigned to an existing variable, that
 variable will be removed from the environment.  
 Example:
 
-	$ numbrs
-	> foo = 123
-	123
-	> foo
-	123
-	> foo = _
-	0
-	> foo
-	Error: undefined variable: 'foo'
+    $ numbrs
+    > foo = 123
+    123
+    > foo
+    123
+    > foo = _
+    0
+    > foo
+    Error: undefined variable: 'foo'
 
 The underscore cannot be assigned. An error message will be printed if you
 attempt to:
 
-	$ numbrs
-	> _ = 123
-	Error: Can't assign special variable `_`
+    $ numbrs
+    > _ = 123
+    Error: Can't assign special variable `_`
 
 ##### `_prec`
 See the [Output Formatting/Precision](#output-formattingprecision)
