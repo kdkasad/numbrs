@@ -63,6 +63,22 @@ impl Runtime {
         Self { env }
     }
 
+    /// Load default unit definitions.
+    ///
+    /// Defaults are defined in `src/defaults.num`.
+    pub fn load_defaults(&mut self) -> Result<(), RuntimeError> {
+        const DEFAULTS_SRC: &str = include_str!("defaults.num");
+        // Filter out comments and empty lines
+        let lines = DEFAULTS_SRC
+            .lines()
+            .filter(|line| !line.is_empty() && !matches!(line.chars().next(), Some('#')));
+        for line in lines {
+            eprintln!("Loading default: {}", line);
+            self.evaluate(line)?;
+        }
+        Ok(())
+    }
+
     pub fn evaluate(&mut self, input: &str) -> Result<Value, RuntimeError> {
         let tree = Parser::new(input).parse()?;
         check_for_prohibited_behavior(&tree)?;

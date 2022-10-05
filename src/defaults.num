@@ -1,0 +1,109 @@
+# Numerical constants
+pi := 3.141592653589793238
+e := 2.71828182845904523536
+
+m := LENGTH
+meter := m
+micron := micrometer
+
+s := TIME
+second := s
+sec := s
+minute := 60 s
+min := minute
+hour := 60 mins
+hr := hour
+day := 24 hrs
+d := day
+week := 7 days
+wk := week
+fortnight := 14 days
+
+kg := MASS
+kilogram := kg
+gram := 1/1000 kg
+gm :=                  gram
+g :=                   gram
+tonne :=               1000 kg
+t :=                   tonne
+metricton :=           tonne
+
+A := CURRENT
+ampere := A
+amp := ampere
+
+K := TEMPERATURE
+kelvin := K
+
+mol := AMOUNT_OF_SUBSTANCE
+mole := mol
+
+# Radians are not a physical quantity so they are defined as an arbitrary value
+# unit which other units can be based off of.
+radian := 1
+circle :=              2 pi radians
+degree :=              1/360 circle
+deg    :=              degree
+arcdegree :=           degree
+arcdeg :=              arcdegree
+arcminute :=           1/60 degree
+arcmin :=              arcminute
+arcsecond :=           1/60 arcmin
+arcsec :=              arcsecond
+mas :=                 milliarcsecond
+
+cd := LUMINOUS_INTENSITY
+candela := cd
+
+newton :=              kg m / s^2
+N :=                   newton
+
+pascal :=              N/m^2
+Pa :=                  pascal
+
+joule :=               N m
+J :=                   joule
+
+watt :=                J/s
+W :=                   watt
+
+coulomb :=             A s
+C :=                   coulomb
+
+volt :=                W/A
+V :=                   volt
+
+ohm :=                 V/A
+
+siemens :=             A/V
+S :=                   siemens
+
+farad :=               C/V
+F :=                   farad
+
+weber :=               V s
+Wb :=                  weber
+
+henry :=               Wb/A
+H :=                   henry
+
+tesla :=               Wb/m^2
+T :=                   tesla
+
+hertz :=               s^-1
+Hz :=                  hertz
+
+bar :=                 100000 Pa
+vac :=                 millibar
+
+cc    := cm^3
+liter := 1000 cc
+L     := liter
+
+# Physical constants
+c := 299792458 m/s
+#elementarycharge :=   1.602176634e-19 C
+#electroncharge :=      - elementarycharge
+#protoncharge :=        + elementarycharge
+#h :=     6.62607015ee-34 J s
+#plancksconstant :=     h

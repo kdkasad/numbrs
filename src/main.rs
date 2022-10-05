@@ -56,6 +56,13 @@ fn main() {
         }
     };
     let mut rt = Runtime::new();
+    if let Err(err) = rt.load_defaults() {
+        eprintln!(
+            "{}Error:{} failed to load defaults into runtime: {}",
+            COLOR_ERR, COLOR_RST, err
+        );
+        return;
+    }
 
     // Print startup message
     // TODO: only print when connected to terminal
