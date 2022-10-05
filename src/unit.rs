@@ -55,11 +55,11 @@ use crate::{dimension::Dimension, eval::EvalError, rat_util_macros::rat};
 /// [1]: crate::unit
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Unit {
-    name: String,
-    exponent: i32,
-    scale: BigRational,
-    offset: BigRational,
-    dimension: Dimension,
+    pub(crate) name: String,
+    pub(crate) exponent: i32,
+    pub(crate) scale: BigRational,
+    pub(crate) offset: BigRational,
+    pub(crate) dimension: Dimension,
 }
 
 impl Unit {
@@ -201,6 +201,17 @@ impl Units {
             result *= unit.scale.pow(unit.exponent);
         }
         result
+    }
+
+    /// Create a new [Unit] identical to this [Units] list.
+    pub fn collapse_to(&self, name: String) -> Unit {
+        Unit::new(
+            name.clone(),
+            1,
+            self.aggregate_scales(),
+            rat!(0),
+            self.dimension(),
+        )
     }
 }
 

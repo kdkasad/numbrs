@@ -27,6 +27,7 @@ use num::{BigRational, ToPrimitive, Zero};
 use thiserror::Error;
 
 use crate::{
+    affixes::{resolve_unit, try_get_prefix_scale},
     ast::*,
     dimension::Dimension,
     operation::Operation,
@@ -318,7 +319,13 @@ impl Variable {
     fn eval(self, env: &HashMap<String, Value>) -> Result<Value, EvalError> {
         match env.get(self.name()) {
             Some(val) => Ok(val.clone()),
-            None => Err(EvalError::UndefinedVariable(self.name().to_owned())),
+            None => match resolve_unit(self.name(), env) {
+                Some(val) => Ok(Units::from([val]).into()),
+                None => match try_get_prefix_scale(self.name()) {
+                    Some(val) => Ok(val.into()),
+                    None => Err(EvalError::UndefinedVariable(self.name().to_owned())),
+                },
+            },
         }
     }
 }
@@ -428,13 +435,7 @@ where
                 rat!(0),
                 q.units.dimension(),
             ),
-            Value::Unit(units) => Unit::new(
-                name.clone(),
-                1,
-                units.aggregate_scales(),
-                rat!(0),
-                units.dimension(),
-            ),
+            Value::Unit(units) => units.collapse_to(name.clone()),
             Value::Number(rat) => Unit::new(name.clone(), 1, rat, rat!(0), Dimension::new()),
         }]))
     }

@@ -53,6 +53,7 @@ name = "numbrs"
 path = "src/main.rs"
 
 [dependencies]
+lazy_static = "1.4.0"
 num = "0.4.0"
 rustyline = "10.0.0"
 strum = "0.24.1"
