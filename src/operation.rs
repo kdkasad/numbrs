@@ -72,6 +72,31 @@ impl Operation {
     pub fn is_unary(self) -> bool {
         !self.is_binary()
     }
+
+    /// Try to convert a binary operation to the equivalent unary operation.
+    /// 
+    /// # Example
+    /// 
+    /// ```
+    /// use numbrs::operation::Operation;
+    /// 
+    /// let binop = Operation::Add;
+    /// let unop = binop.try_to_unary();
+    /// assert!(matches!(unop, Some(Operation::UnaryAdd)));
+    /// 
+    /// let binop = Operation::Multiply;
+    /// let unop = binop.try_to_unary();
+    /// assert!(matches!(unop, None));
+    /// ```
+    pub fn try_to_unary(self) -> Option<Self> {
+        use Operation::*;
+        match self {
+            UnaryAdd | UnarySubtract => Some(self),
+            Add => Some(UnaryAdd),
+            Subtract => Some(UnarySubtract),
+            Multiply | Divide | Raise | Assign | AssignUnit => None,
+        }
+    }
 }
 
 #[derive(Debug, Error, PartialEq, Eq)]

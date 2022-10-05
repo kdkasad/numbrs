@@ -28,7 +28,7 @@ use num::BigRational;
 use thiserror::Error;
 
 use crate::{
-    ast::{BinaryExpression, Node, Variable},
+    ast::{BinaryExpression, Node, UnaryExpression, Variable},
     lexer::{Lexer, Token},
     operation::Operation,
 };
@@ -64,9 +64,19 @@ impl Parser {
                     }
                     lhs
                 }
-                Token::Operator(_) | Token::GroupEnd => {
-                    return Err(ParseError::ExpectedOperand(tok.into()))
+                Token::Operator(op) => {
+                    if let Some(op) = op.try_to_unary() {
+                        let ((), r_bp) = op.prefix_binding_power();
+                        let expr = self.parse_expr(r_bp)?;
+                        Node::from(UnaryExpression {
+                            operation: op,
+                            expr: Box::new(expr),
+                        })
+                    } else {
+                        return Err(ParseError::ExpectedOperand(tok.into()));
+                    }
                 }
+                Token::GroupEnd => return Err(ParseError::ExpectedOperand(tok.into())),
                 Token::Illegal(c) => return Err(ParseError::IllegalToken(c)),
             },
             None => return Err(ParseError::EndOfStream),
@@ -123,7 +133,7 @@ fn str_to_num(src: &str) -> Result<BigRational, ParseError> {
 
 pub trait BindingPower {
     fn infix_binding_power(&self) -> (u32, u32);
-    fn prefix_binding_power(&self) -> (u32, u32);
+    fn prefix_binding_power(&self) -> ((), u32);
 }
 
 impl BindingPower for Operation {
@@ -140,10 +150,10 @@ impl BindingPower for Operation {
         }
     }
 
-    fn prefix_binding_power(&self) -> (u32, u32) {
+    fn prefix_binding_power(&self) -> ((), u32) {
         use Operation::*;
         match self {
-            UnaryAdd | UnarySubtract => todo!(),
+            UnaryAdd | UnarySubtract => ((), 11),
             Add | Subtract | Multiply | Divide | Raise | Assign | AssignUnit => {
                 panic!("Expected (unary) prefix operator, got (binary) infix operator")
             }
@@ -243,8 +253,8 @@ mod tests {
         }
 
         testfor! {
-            ParseError::EndOfStream => ["", "\t \t\n\n  ", "1 +", "1 + 8 ^ "];
-            ParseError::ExpectedOperand("operator") => ["+", "-", "*", "/", "1 * +"];
+            ParseError::EndOfStream => ["", "\t \t\n\n  ", "1 +", "1 + 8 ^ ", "+", "-", "1 * +"];
+            ParseError::ExpectedOperand("operator") => ["*", "/"];
             ParseError::ExpectedToken("operator", _got) => ["1 a 2"];
             ParseError::IllegalToken(_) => ["123 ? 456", "&", "#001"];
             ParseError::ParseNumberLiteral(_) => ["1.2.3"];
