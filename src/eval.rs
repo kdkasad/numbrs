@@ -74,14 +74,18 @@ impl Operable for BigRational {
                     Ok(rhs.into())
                 }
                 Divide => {
-                    rhs.mag /= self;
+                    rhs.mag = self / rhs.mag;
+                    rhs.units.pow_assign(-1);
                     Ok(rhs.into())
                 }
                 Assign | AssignUnit | UnaryAdd | UnarySubtract => unreachable!(),
             },
-            Value::Unit(rhs) => match op {
+            Value::Unit(mut rhs) => match op {
                 Multiply => Ok(Quantity::new(self, rhs).into()),
-                Divide => Ok(Quantity::new(self.recip(), rhs).into()),
+                Divide => {
+                    rhs.pow_assign(-1);
+                    Ok(Quantity::new(self, rhs).into())
+                }
                 Add | Subtract => Err(EvalError::InvalidBinaryOperation(
                     self.into(),
                     rhs.into(),
