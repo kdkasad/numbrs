@@ -24,7 +24,6 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 use std::fmt::{self, Display};
 
 use num::BigRational;
-use thiserror::Error;
 
 use crate::{operation::Operation, unit::Units};
 
@@ -122,18 +121,6 @@ pub enum Value {
     Unit(Units),
 }
 
-impl TryFrom<Node> for Value {
-    type Error = Error;
-
-    fn try_from(node: Node) -> Result<Self, Self::Error> {
-        match node {
-            Node::Number(num) => Ok(Value::Number(num)),
-            Node::Quantity(q) => Ok(Value::Quantity(q)),
-            _ => Err(Error::ValueConversionError(node)),
-        }
-    }
-}
-
 impl From<Quantity> for Value {
     fn from(src: Quantity) -> Self {
         Value::Quantity(src)
@@ -184,12 +171,6 @@ node_from_subtype!(UnaryExpression);
 node_from_subtype!(BinaryExpression);
 node_from_subtype!(Variable);
 node_from_subtype!(Quantity);
-
-#[derive(Error, Debug)]
-pub enum Error {
-    #[error("Node is not a value: {:?}", .0)]
-    ValueConversionError(Node),
-}
 
 #[cfg(test)]
 mod tests {
