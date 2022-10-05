@@ -112,10 +112,15 @@ impl Iterator for Lexer {
                     Some(Token::Operator(op))
                 } else if c.is_alphabetic() || c == '_' {
                     // c is alphabetic or underscore
-                    // collect contiguous ident chars and return ident token
-                    Some(Token::Ident(collect_chars(&mut self.chars, |c| {
-                        c.is_alphabetic() || c == '_'
-                    })))
+                    // collect contiguous ident chars
+                    let ident = collect_chars(&mut self.chars, |c| c.is_alphabetic() || c == '_');
+                    Some(if let Ok(op) = Operation::from_str(&ident) {
+                        // check if identifier is a word operator
+                        Token::Operator(op)
+                    } else {
+                        // else, return identifier token
+                        Token::Ident(ident)
+                    })
                 } else if c == ':' {
                     self.chars.next(); // consume ':'
                     if let Some('=') = self.chars.peek() {

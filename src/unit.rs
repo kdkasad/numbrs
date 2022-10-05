@@ -46,7 +46,7 @@ use std::{
 
 use num::BigRational;
 
-use crate::{dimension::Dimension, eval::EvalError, rat_util_macros::rat};
+use crate::{ast::Quantity, dimension::Dimension, eval::EvalError, rat_util_macros::rat};
 
 /// Unit of measurement.
 ///
@@ -310,6 +310,22 @@ pub fn convert(n: &BigRational, from: &Units, to: &Units) -> Result<BigRational,
         ))
     } else {
         Ok(to.descale(&from.scale(n)))
+    }
+}
+
+impl Quantity {
+    /// Convert this quantity to another set of units.
+    ///
+    /// The current and destination unit sets must conform. If they don't, an
+    /// error is returned.
+    pub fn convert_to(mut self, units: Units) -> Result<Self, EvalError> {
+        if self.units.conforms_to(&units) {
+            self.mag = convert(&self.mag, &self.units, &units)?;
+            self.units = units;
+            Ok(self)
+        } else {
+            Err(EvalError::ConvertNonConformingUnits(self.units, units))
+        }
     }
 }
 

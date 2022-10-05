@@ -49,6 +49,9 @@ pub enum Operation {
     UnaryAdd,
     #[strum(serialize = "-")]
     UnarySubtract,
+
+    #[strum(serialize = "to")]
+    ConvertUnits,
 }
 
 impl Operation {
@@ -64,7 +67,7 @@ impl Operation {
     pub fn is_binary(self) -> bool {
         use Operation::*;
         match self {
-            Add | Subtract | Multiply | Divide | Raise | Assign | AssignUnit => true,
+            Add | Subtract | Multiply | Divide | Raise | Assign | AssignUnit | ConvertUnits => true,
             UnaryAdd | UnarySubtract => false,
         }
     }
@@ -74,16 +77,16 @@ impl Operation {
     }
 
     /// Try to convert a binary operation to the equivalent unary operation.
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// ```
     /// use numbrs::operation::Operation;
-    /// 
+    ///
     /// let binop = Operation::Add;
     /// let unop = binop.try_to_unary();
     /// assert!(matches!(unop, Some(Operation::UnaryAdd)));
-    /// 
+    ///
     /// let binop = Operation::Multiply;
     /// let unop = binop.try_to_unary();
     /// assert!(matches!(unop, None));
@@ -94,7 +97,7 @@ impl Operation {
             UnaryAdd | UnarySubtract => Some(self),
             Add => Some(UnaryAdd),
             Subtract => Some(UnarySubtract),
-            Multiply | Divide | Raise | Assign | AssignUnit => None,
+            Multiply | Divide | Raise | Assign | AssignUnit | ConvertUnits => None,
         }
     }
 }

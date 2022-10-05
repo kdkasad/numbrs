@@ -15,11 +15,12 @@ The goal of Numbrs is twofold:
      - [x] Arithmetic
      - [ ] Bitwise operations
      - [ ] Number base conversion
-     - [ ] Unit/quantity conversion:
+     - [x] Unit/quantity conversion:
         - [x] Define units
         - [x] Create quantities
         - [x] Perform arithmetic on quantities
-        - [ ] Convert quantities between units
+        - [x] Convert quantities between units
+        - [ ] (optional) Define custom base quantities (e.g. currency)
 
 ## Installation
 

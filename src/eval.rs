@@ -60,7 +60,7 @@ impl Operable for BigRational {
                 Multiply => self * rhs,
                 Divide => self / rhs,
                 Raise => bigrational_pow(self, rhs)?,
-                Assign | AssignUnit | UnaryAdd | UnarySubtract => unreachable!(),
+                Assign | AssignUnit | UnaryAdd | UnarySubtract | ConvertUnits => unreachable!(),
             }
             .into()),
             Value::Quantity(mut rhs) => match op {
@@ -79,7 +79,7 @@ impl Operable for BigRational {
                     rhs.units.pow_assign(-1);
                     Ok(rhs.into())
                 }
-                Assign | AssignUnit | UnaryAdd | UnarySubtract => unreachable!(),
+                Assign | AssignUnit | UnaryAdd | UnarySubtract | ConvertUnits => unreachable!(),
             },
             Value::Unit(mut rhs) => match op {
                 Multiply => Ok(Quantity::new(self, rhs).into()),
@@ -93,7 +93,7 @@ impl Operable for BigRational {
                     op,
                 )),
                 Raise => Err(EvalError::NonIntegerExponent(rhs.into())),
-                Assign | AssignUnit | UnaryAdd | UnarySubtract => unreachable!(),
+                Assign | AssignUnit | UnaryAdd | UnarySubtract | ConvertUnits => unreachable!(),
             },
         }
     }
@@ -103,7 +103,7 @@ impl Operable for BigRational {
         match op {
             UnaryAdd => Ok(self.into()),
             UnarySubtract => Ok(self.neg().into()),
-            Add | Subtract | Multiply | Divide | Raise | Assign | AssignUnit => {
+            Add | Subtract | Multiply | Divide | Raise | Assign | AssignUnit | ConvertUnits => {
                 Err(EvalError::ExpectedOperation("unary", "binary", op))
             }
         }
@@ -135,7 +135,7 @@ impl Operable for Quantity {
                     }
                     Raise => return Err(EvalError::NonIntegerExponent(rhs.into())),
                     Multiply | Divide => (), // valid case, do nothing
-                    UnaryAdd | UnarySubtract | Assign | AssignUnit => unreachable!(),
+                    UnaryAdd | UnarySubtract | Assign | AssignUnit | ConvertUnits => unreachable!(),
                 }
 
                 // Perform operations for valid cases
@@ -154,7 +154,9 @@ impl Operable for Quantity {
                         self.units /= rhs.units;
                         self.mag /= rhs.mag;
                     }
-                    Raise | UnaryAdd | UnarySubtract | Assign | AssignUnit => unreachable!(),
+                    Raise | UnaryAdd | UnarySubtract | Assign | AssignUnit | ConvertUnits => {
+                        unreachable!()
+                    }
                 }
                 Ok(self.into())
             }
@@ -188,7 +190,7 @@ impl Operable for Quantity {
                     }
                 }
 
-                UnaryAdd | UnarySubtract | Assign | AssignUnit => unreachable!(),
+                UnaryAdd | UnarySubtract | Assign | AssignUnit | ConvertUnits => unreachable!(),
             },
             Value::Unit(rhs) => match op {
                 Multiply => {
@@ -205,7 +207,7 @@ impl Operable for Quantity {
                     op,
                 )),
                 Raise => Err(EvalError::NonIntegerExponent(rhs.into())),
-                UnaryAdd | UnarySubtract | Assign | AssignUnit => unreachable!(),
+                UnaryAdd | UnarySubtract | Assign | AssignUnit | ConvertUnits => unreachable!(),
             },
         }
     }
@@ -218,7 +220,7 @@ impl Operable for Quantity {
                 self.mag = -self.mag;
                 Ok(self.into())
             }
-            Add | Subtract | Multiply | Divide | Raise | Assign | AssignUnit => {
+            Add | Subtract | Multiply | Divide | Raise | Assign | AssignUnit | ConvertUnits => {
                 Err(EvalError::ExpectedOperation("unary", "binary", op))
             }
         }
@@ -270,7 +272,7 @@ impl Operable for Units {
                     op,
                 )),
                 Raise => Err(EvalError::NonIntegerExponent(rhs.into())),
-                Assign | AssignUnit | UnaryAdd | UnarySubtract => unreachable!(),
+                Assign | AssignUnit | UnaryAdd | UnarySubtract | ConvertUnits => unreachable!(),
             },
             Value::Number(rhs) => match op {
                 Raise => {
@@ -293,7 +295,7 @@ impl Operable for Units {
                     rhs.into(),
                     op,
                 )),
-                Assign | AssignUnit | UnaryAdd | UnarySubtract => unreachable!(),
+                Assign | AssignUnit | UnaryAdd | UnarySubtract | ConvertUnits => unreachable!(),
             },
             Value::Unit(rhs) => match op {
                 Multiply => Ok(Value::from(self * rhs)),
@@ -304,7 +306,7 @@ impl Operable for Units {
                     op,
                 )),
                 Raise => Err(EvalError::NonIntegerExponent(rhs.into())),
-                Assign | AssignUnit | UnaryAdd | UnarySubtract => unreachable!(),
+                Assign | AssignUnit | UnaryAdd | UnarySubtract | ConvertUnits => unreachable!(),
             },
         }
     }
@@ -375,11 +377,27 @@ impl Node {
         match self {
             Node::BinaryExpression(node) => {
                 if let Operation::Assign | Operation::AssignUnit = node.operation {
+                    // Handle variable assignment here because it requires the
+                    // LHS Node and not its result value.
                     let unit = matches!(node.operation, Operation::AssignUnit);
                     if let Node::Variable(var) = *node.lhs {
                         handle_assignment(var.name(), *node.rhs, unit, env)
                     } else {
                         Err(EvalError::InvalidAssignmentLHS)
+                    }
+                } else if let Operation::ConvertUnits = node.operation {
+                    // Handle unit conversion here because it's the same for all
+                    // LHS types.
+                    let lhs = Quantity::from(node.lhs.eval(env)?);
+                    let rhs = node.rhs.eval(env)?;
+                    if let Value::Unit(units) = rhs {
+                        Ok(lhs.convert_to(units)?.into())
+                    } else {
+                        Err(EvalError::InvalidBinaryOperation(
+                            lhs.into(),
+                            rhs,
+                            node.operation,
+                        ))
                     }
                 } else {
                     let lval = node.lhs.eval(env)?;

@@ -25,7 +25,7 @@ use std::fmt::{self, Display};
 
 use num::BigRational;
 
-use crate::{operation::Operation, unit::Units};
+use crate::{operation::Operation, rat_util_macros::rat, unit::Units};
 
 /// Represents a quantity
 ///
@@ -55,6 +55,20 @@ impl Quantity {
 impl Display for Quantity {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {}", self.mag, self.units)
+    }
+}
+
+impl From<Value> for Quantity {
+    /// Convert a [Value] to a [Quantity].
+    ///
+    /// If the [Value] is a unit, it is given a magnitude of 1.
+    /// If the [Value] is a number, it is given a dimensionless unit.
+    fn from(src: Value) -> Self {
+        match src {
+            Value::Quantity(quantity) => quantity,
+            Value::Number(rat) => Quantity::new(rat, Units::new()),
+            Value::Unit(units) => Quantity::new(rat!(1), units),
+        }
     }
 }
 
