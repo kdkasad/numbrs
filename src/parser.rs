@@ -98,7 +98,7 @@ impl Parser {
                 Token::Illegal(c) => return Err(ParseError::IllegalToken(c)),
             };
 
-            let (l_bp, r_bp) = op.infix_binding_power();
+            let (l_bp, r_bp) = op.infix_binding_power(implicit);
             if l_bp < min_bp {
                 break;
             }
@@ -132,29 +132,37 @@ fn str_to_num(src: &str) -> Result<BigRational, ParseError> {
 }
 
 pub trait BindingPower {
-    fn infix_binding_power(&self) -> (u32, u32);
+    fn infix_binding_power(&self, implicit: bool) -> (u32, u32);
     fn prefix_binding_power(&self) -> ((), u32);
 }
 
 impl BindingPower for Operation {
-    fn infix_binding_power(&self) -> (u32, u32) {
+    fn infix_binding_power(&self, implicit: bool) -> (u32, u32) {
         use Operation::*;
-        match self {
-            Assign | AssignUnit => (12, 1),
-            Add | Subtract => (3, 4),
-            ConvertUnits => (5, 6),
-            Multiply | Divide => (6, 7),
-            Raise => (9, 10),
+        let mut result = match self {
+            Assign | AssignUnit => (105, 10),
+            Add | Subtract => (30, 45),
+            ConvertUnits => (50, 65),
+            Multiply | Divide => (65, 70),
+            Raise => (90, 95),
             UnaryAdd | UnarySubtract => {
                 panic!("Expected (binary) infix operator, got unary operator")
             }
+        };
+
+        // Prioritize implicit operations over their explicit counterparts
+        if implicit {
+            result.0 += 2;
+            result.1 += 2;
         }
+        
+        result
     }
 
     fn prefix_binding_power(&self) -> ((), u32) {
         use Operation::*;
         match self {
-            UnaryAdd | UnarySubtract => ((), 11),
+            UnaryAdd | UnarySubtract => ((), 100),
             Add | Subtract | Multiply | Divide | Raise | Assign | AssignUnit | ConvertUnits => {
                 panic!("Expected (unary) prefix operator, got (binary) infix operator")
             }
