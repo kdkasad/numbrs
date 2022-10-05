@@ -316,21 +316,21 @@ mod tests {
                 exponent: 1,
                 scale: rat!(1),
                 offset: rat!(0),
-                dimension: Dimension::from([1, 0, 0]),
+                dimension: Dimension::from(&[1, 0, 0][..]),
             },
             Unit {
                 name: String::from("kg"),
                 exponent: 1,
                 scale: rat!(1),
                 offset: rat!(0),
-                dimension: Dimension::from([0, 1, 0]),
+                dimension: Dimension::from(&[0, 1, 0][..]),
             },
             Unit {
                 name: String::from("s"),
                 exponent: -2,
                 scale: rat!(1),
                 offset: rat!(0),
-                dimension: Dimension::from([0, 0, 1]),
+                dimension: Dimension::from(&[0, 0, 1][..]),
             },
         ])
     }
@@ -341,7 +341,7 @@ mod tests {
             exponent: 1,
             scale: rat!(1),
             offset: rat!(0),
-            dimension: Dimension::from([1, 1, -2]),
+            dimension: Dimension::from(&[1, 1, -2][..]),
         }])
     }
 
@@ -354,7 +354,7 @@ mod tests {
     #[test]
     fn units_dimension() {
         let newton = newton_parts();
-        assert_eq!(newton.dimension(), Dimension::from([1, 1, -2]));
+        assert_eq!(newton.dimension(), Dimension::from(&[1, 1, -2][..]));
     }
 
     /// Tests conformity checking
@@ -382,7 +382,7 @@ mod tests {
             exponent: 0,
             scale: rat!(1),
             offset: rat!(0),
-            dimension: Dimension::from([1, 1, 1]),
+            dimension: Dimension::from(&[1, 1, 1][..]),
         }]);
         assert!(a.is_dimensionless());
         assert!(b.is_dimensionless());
@@ -424,7 +424,7 @@ mod tests {
             exponent: 2,
             scale: rat!(1),
             offset: rat!(0),
-            dimension: Dimension::from([1, 0, 0]),
+            dimension: Dimension::from(&[1, 0, 0][..]),
         }]);
 
         let b = Units(vec![Unit {
@@ -432,7 +432,7 @@ mod tests {
             exponent: 1,
             scale: rat!(1),
             offset: rat!(0),
-            dimension: Dimension::from([1, 0, 0]),
+            dimension: Dimension::from(&[1, 0, 0][..]),
         }]);
 
         a /= b.clone();
@@ -442,7 +442,7 @@ mod tests {
             exponent: 1,
             scale: rat!(1),
             offset: rat!(0),
-            dimension: Dimension::from([1, 0, 0]),
+            dimension: Dimension::from(&[1, 0, 0][..]),
         }]);
 
         assert_eq!(a, expected_result);
@@ -453,14 +453,14 @@ mod tests {
                 exponent: 1,
                 scale: rat!(1),
                 offset: rat!(0),
-                dimension: Dimension::from([1, 0, 0]),
+                dimension: Dimension::from(&[1, 0, 0][..]),
             },
             Unit {
                 name: "m".to_string(),
                 exponent: 1,
                 scale: rat!(1),
                 offset: rat!(0),
-                dimension: Dimension::from([1, 0, 0]),
+                dimension: Dimension::from(&[1, 0, 0][..]),
             },
         ]);
 

@@ -23,7 +23,10 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 //!
 //! Dimensions are how units map to physical quantities.
 
-use std::ops::{Index, IndexMut, Mul, MulAssign};
+use std::{
+    cmp::min,
+    ops::{Index, IndexMut, Mul, MulAssign},
+};
 
 use strum::{EnumCount, IntoEnumIterator};
 use strum_macros::{EnumCount as EnumCountMacro, EnumIter};
@@ -38,6 +41,10 @@ pub(crate) enum BaseQuantity {
     Length,
     Mass,
     Time,
+    Current,
+    Temperature,
+    AmountOfSubstance,
+    LuminousIntensity,
 }
 
 /// Dimension specifier.
@@ -69,6 +76,23 @@ impl Dimension {
             self[bq] *= pow;
         }
         self
+    }
+}
+
+impl From<&[i32]> for Dimension {
+    /// Creates a [Dimension] from a slice of [i32]'s.
+    /// 
+    /// If the slice is smaller than the number of [base quantities][1], the
+    /// dimension for each missing quantity is set to 0. If the slice is larger,
+    /// the extra elements are ignored.
+    /// 
+    /// [1]: BaseQuantity
+    fn from(src: &[i32]) -> Self {
+        let mut new = Self::new();
+        for i in 0..min(src.len(), BaseQuantity::COUNT) {
+            new.0[i] = src[i];
+        }
+        new
     }
 }
 
@@ -129,36 +153,36 @@ mod tests {
     /// Test multiplication of [Dimensions][Dimension]
     #[test]
     fn multiplication() {
-        let a = Dimension([1, 2, 3]);
-        let b = Dimension([4, 5, 6]);
-        assert_eq!(a * b, Dimension([5, 7, 9]));
-        assert_eq!(a.0, [1, 2, 3]);
-        assert_eq!(b.0, [4, 5, 6]);
+        let a = Dimension::from(&[1, 2, 3][..]);
+        let b = Dimension::from(&[4, 5, 6][..]);
+        assert_eq!(a * b, Dimension::from(&[5, 7, 9][..]));
+        assert_eq!(a.0[..3], [1, 2, 3]);
+        assert_eq!(b.0[..3], [4, 5, 6]);
     }
 
     /// Test raising a [Dimension] to a power
     #[test]
     fn exponentiation() {
-        let a = Dimension([1, 2, 3]);
+        let a = Dimension::from(&[1, 2, 3][..]);
         let pow = 4;
-        assert_eq!(a.pow(pow), Dimension([4, 8, 12]));
-        assert_eq!(a.0, [1, 2, 3]);
+        assert_eq!(a.pow(pow), Dimension::from(&[4, 8, 12][..]));
+        assert_eq!(a.0[..3], [1, 2, 3]);
     }
 
     /// Test checking if a [Dimension] is pure
     #[test]
     fn purity() {
-        let dim = Dimension([0; BaseQuantity::COUNT]);
+        let dim = Dimension::from(&[0; BaseQuantity::COUNT][..]);
         assert!(dim.is_pure());
     }
 
     /// Test equality checking for [Dimensions][Dimension]
     #[test]
     fn equality() {
-        let a = Dimension([1, 2, 3]);
-        let b = Dimension([1, 2, 3]);
-        let c = Dimension([4, 5, 6]);
-        let d = Dimension([3, 2, 1]);
+        let a = Dimension::from(&[1, 2, 3][..]);
+        let b = Dimension::from(&[1, 2, 3][..]);
+        let c = Dimension::from(&[4, 5, 6][..]);
+        let d = Dimension::from(&[3, 2, 1][..]);
         assert_eq!(a, b);
         assert_ne!(a, c);
         assert_ne!(a, d);
