@@ -23,7 +23,7 @@ use std::collections::HashMap;
 
 use num::BigRational;
 
-use crate::{rat_util_macros::rat, ast::Value, unit::Unit};
+use crate::{ast::Value, rat_util_macros::rat, unit::Unit};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Prefix {
@@ -115,7 +115,6 @@ pub fn try_get_prefix_scale(name: &str) -> Option<BigRational> {
     )
 }
 
-
 macro_rules! prefixes {
     ( $( $name:literal $scale:literal $standalone:tt ),* $(,)? ) => {
         vec![ $(
@@ -179,7 +178,7 @@ lazy_static! {
     ];
 
     /// List of suffixes which map to singular suffix translation.
-    /// 
+    ///
     /// For example, "henries" is the plural of "henry" so the suffix "ies" maps to "y".
     /// In contrast, ""
     pub static ref SUFFIX_MAP: HashMap<String, String> = {

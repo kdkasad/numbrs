@@ -92,9 +92,7 @@ impl Parser {
                     Operation::Multiply
                 }
                 Token::GroupEnd => break,
-                Token::Number(_) => {
-                    return Err(ParseError::ExpectedToken("operator", tok.into()))
-                }
+                Token::Number(_) => return Err(ParseError::ExpectedToken("operator", tok.into())),
                 Token::Illegal(c) => return Err(ParseError::IllegalToken(c)),
             };
 
@@ -155,7 +153,7 @@ impl BindingPower for Operation {
             result.0 += 2;
             result.1 += 2;
         }
-        
+
         result
     }
 

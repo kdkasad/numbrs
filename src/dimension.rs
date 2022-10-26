@@ -82,11 +82,11 @@ impl Dimension {
 
 impl From<&[i32]> for Dimension {
     /// Creates a [Dimension] from a slice of [i32]'s.
-    /// 
+    ///
     /// If the slice is smaller than the number of [base quantities][1], the
     /// dimension for each missing quantity is set to 0. If the slice is larger,
     /// the extra elements are ignored.
-    /// 
+    ///
     /// [1]: BaseQuantity
     fn from(src: &[i32]) -> Self {
         let mut new = Self::new();

@@ -29,6 +29,7 @@ extern crate lazy_static;
 #[cfg(test)]
 extern crate pretty_assertions;
 
+pub mod affixes;
 pub mod ast;
 pub mod dimension;
 pub mod eval;
@@ -36,7 +37,6 @@ pub mod format;
 pub mod lexer;
 pub mod operation;
 pub mod parser;
-pub mod affixes;
 mod rat_util_macros;
 pub mod runtime;
 pub mod unit;
