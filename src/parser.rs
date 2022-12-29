@@ -139,10 +139,10 @@ impl BindingPower for Operation {
         use Operation::*;
         let mut result = match self {
             Assign | AssignUnit => (105, 10),
-            Add | Subtract => (30, 45),
-            ConvertUnits => (50, 65),
-            Multiply | Divide => (65, 70),
-            Raise => (90, 95),
+            Add | Subtract => (30, 35),
+            ConvertUnits => (40, 45),
+            Multiply | Divide => (50, 55),
+            Raise => (60, 65),
             UnaryAdd | UnarySubtract => {
                 panic!("Expected (binary) infix operator, got unary operator")
             }
@@ -240,6 +240,7 @@ mod tests {
             ("1.5", subexpr!(1.5)),
             (".0125", subexpr!(0.0125)),
             ("180.", subexpr!(180)),
+            // TODO: add tests for units
         ];
 
         for (input, expected_result) in cases {
