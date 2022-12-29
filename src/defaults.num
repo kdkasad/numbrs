@@ -126,3 +126,9 @@ c := 299792458 m/s
 #protoncharge :=        + elementarycharge
 #h :=     6.62607015ee-34 J s
 #plancksconstant :=     h
+
+bit := DATA
+byte := 8 bit
+B := byte
+
+bps := bit / s

@@ -46,6 +46,7 @@ pub(crate) enum BaseQuantity {
     Temperature,
     AmountOfSubstance,
     LuminousIntensity,
+    Data,
 }
 
 /// Dimension specifier.
