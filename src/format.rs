@@ -30,6 +30,7 @@ pub trait Formatter {
 }
 
 impl Formatter for BigRational {
+    // TODO: support negative precision, i.e. rounding to whole places
     fn format(&self, precision: usize) -> String {
         if self.is_integer() {
             self.numer().to_string()
