@@ -86,7 +86,7 @@ fn try_get_unit(name: &str, env: &HashMap<String, Value>) -> Option<Unit> {
     }
 
     // Search for existing unit by stripping available prefixes
-    for prefix in (*SI_PREFIXES).iter() {
+    for prefix in (*PREFIXES).iter() {
         if let Some(s) = name.strip_prefix(prefix.text()) {
             if let Some(Value::Unit(units)) = env.get(s) {
                 if (*units).len() > 1 || (*units)[0].offset != rat!(0) {
@@ -107,7 +107,7 @@ fn try_get_unit(name: &str, env: &HashMap<String, Value>) -> Option<Unit> {
 /// Attempt to get the scale value of a [Prefix].
 pub fn try_get_prefix_scale(name: &str) -> Option<BigRational> {
     Some(
-        (*SI_PREFIXES)
+        (*PREFIXES)
             .iter()
             .find(|prefix| prefix.standalone() && prefix.text() == name)?
             .scale()
@@ -116,11 +116,11 @@ pub fn try_get_prefix_scale(name: &str) -> Option<BigRational> {
 }
 
 macro_rules! prefixes {
-    ( $( $name:literal $scale:literal $standalone:tt ),* $(,)? ) => {
+    ( $( $name:literal $base:literal^$scale:literal $standalone:tt ),* $(,)? ) => {
         vec![ $(
             Prefix::new(
                 $name,
-                rat!(10).pow($scale),
+                rat!($base).pow($scale),
                 stringify!($standalone) == "y"
             ),
         )* ]
@@ -128,53 +128,71 @@ macro_rules! prefixes {
 }
 
 lazy_static! {
-    /// Standard prefixes for the International System of units.
-    /// Retrieved from <https://frinklang.org/frinkdata/units.txt>.
-    pub static ref SI_PREFIXES: Vec<Prefix> = prefixes![
-        "yotta"  24  y,
-        "zetta"  21  y,
-        "exa"    18  y,
-        "peta"   15  y,
-        "tera"   12  y,
-        "giga"    9  y,
-        "mega"    6  y,
-        "myria"   4  y,
-        "kilo"    3  y,
-        "hecto"   2  y,
-        "deca"    1  y,
-        "deka"    1  y,
-        "deci"   -1  y,
-        "centi"  -2  y,
-        "milli"  -3  y,
-        "micro"  -6  y,
-        "nano"   -9  y,
-        "pico"  -12  y,
-        "femto" -15  y,
-        "atto"  -18  y,
-        "zepto" -21  y,
-        "yocto" -24  y,
+    /// Standard prefixes for units.
+    /// Mostly derived from <https://frinklang.org/frinkdata/units.txt>.
+    pub static ref PREFIXES: Vec<Prefix> = prefixes![
+        "yotta"  10^24  y,
+        "zetta"  10^21  y,
+        "exa"    10^18  y,
+        "peta"   10^15  y,
+        "tera"   10^12  y,
+        "giga"    10^9  y,
+        "mega"    10^6  y,
+        "myria"   10^4  y,
+        "kilo"    10^3  y,
+        "hecto"   10^2  y,
+        "deca"    10^1  y,
+        "deka"    10^1  y,
+        "deci"   10^-1  y,
+        "centi"  10^-2  y,
+        "milli"  10^-3  y,
+        "micro"  10^-6  y,
+        "nano"   10^-9  y,
+        "pico"  10^-12  y,
+        "femto" 10^-15  y,
+        "atto"  10^-18  y,
+        "zepto" 10^-21  y,
+        "yocto" 10^-24  y,
 
-        "Y"  24   n, // yotta
-        "Z"  21   n, // zetta
-        "E"  18   n, // exa
-        "P"  15   n, // peta
-        "T"  12   n, // tera
-        "G"   9   n, // giga
-        "M"   6   n, // mega
-        "k"   3   n, // kilo
-        "h"   2   n, // hecto
-        "da"  1   n, // deka
-        "d"  -1   n, // deci
-        "c"  -2   n, // centi
-        "m"  -3   n, // milli
-        "µ"  -6   n, // micro
-        "u"  -6   n, // micro (ASCII alternative)
-        "n"  -9   n, // nano
-        "p"  -12  n, // pico
-        "f"  -15  n, // femto
-        "a"  -18  n, // atto
-        "z"  -21  n, // zepto
-        "y"  -24  n, // yocto
+        "Y"  10^24   n, // yotta
+        "Z"  10^21   n, // zetta
+        "E"  10^18   n, // exa
+        "P"  10^15   n, // peta
+        "T"  10^12   n, // tera
+        "G"   10^9   n, // giga
+        "M"   10^6   n, // mega
+        "k"   10^3   n, // kilo
+        "h"   10^2   n, // hecto
+        "da"  10^1   n, // deka
+        "d"  10^-1   n, // deci
+        "c"  10^-2   n, // centi
+        "m"  10^-3   n, // milli
+        "µ"  10^-6   n, // micro
+        "u"  10^-6   n, // micro (ASCII alternative)
+        "n"  10^-9   n, // nano
+        "p"  10^-12  n, // pico
+        "f"  10^-15  n, // femto
+        "a"  10^-18  n, // atto
+        "z"  10^-21  n, // zepto
+        "y"  10^-24  n, // yocto
+
+        "kibi"  1024^1  y,
+        "mebi"  1024^2  y,
+        "gibi"  1024^3  y,
+        "tebi"  1024^4  y,
+        "pebi"  1024^5  y,
+        "exbi"  1024^6  y,
+        "zebi"  1024^7  y,
+        "yobi"  1024^8  y,
+
+        "Ki"  1024^1  n, // kibi
+        "Mi"  1024^2  n, // mebi
+        "Gi"  1024^3  n, // gibi
+        "Ti"  1024^4  n, // tebi
+        "Pi"  1024^5  n, // pebi
+        "Ei"  1024^6  n, // exbi
+        "Zi"  1024^7  n, // zebi
+        "Yi"  1024^8  n, // yobi
     ];
 
     /// List of suffixes which map to singular suffix translation.
@@ -197,7 +215,7 @@ mod tests {
     /// Just test the first two prefixes to make sure the assignment works.
     #[test]
     fn std_prefixes() {
-        assert!(SI_PREFIXES.contains(&Prefix::new("yotta", rat!(10).pow(24), true)));
-        assert!(SI_PREFIXES.contains(&Prefix::new("k", rat!(1000), false)));
+        assert!(PREFIXES.contains(&Prefix::new("yotta", rat!(10).pow(24), true)));
+        assert!(PREFIXES.contains(&Prefix::new("k", rat!(1000), false)));
     }
 }
