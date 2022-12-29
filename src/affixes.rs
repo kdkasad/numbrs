@@ -180,9 +180,9 @@ lazy_static! {
     /// List of suffixes which map to singular suffix translation.
     ///
     /// For example, "henries" is the plural of "henry" so the suffix "ies" maps to "y".
-    /// In contrast, ""
+    /// "bytes" is the plural of "byte", so the suffix "s" maps to nothing ("").
     pub static ref SUFFIX_MAP: HashMap<String, String> = {
-        let mut map: HashMap<String, String> = HashMap::new();
+        let mut map = HashMap::new();
         map.insert("s".to_string(), "".to_string());
         map.insert("es".to_string(), "".to_string());
         map.insert("ies".to_string(), "y".to_string());
