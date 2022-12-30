@@ -1,97 +1,18 @@
-name: Publish Numbrs binaries
+name: Publish Numbrs release
+
 on:
   release:
-    types: [published]
-
-env:
-  CARGO_INCREMENTAL: 0
-  RUST_BACKTRACE: short
-  RUSTFLAGS: "-D warnings"
+    types:
+      - published
 
 jobs:
   build:
-    name: Build (${{ matrix.target  }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            artifact: numbrs-x86_64-windows.zip
-
-          - os: windows-latest
-            target: i686-pc-windows-msvc
-            artifact: numbrs-i686-windows.zip
-
-          - os: windows-latest
-            target: aarch64-pc-windows-msvc
-            artifact: numbrs-aarch64-windows.zip
-
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            artifact: numbrs-x86_64-macos.tar.gz
-
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            artifact: numbrs-aarch64-macos.tar.gz
-
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            artifact: numbrs-x86_64-linux.tar.gz
-
-          - os: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
-            artifact: numbrs-aarch64-linux.tar.gz
-            use-cross: true
-
-          - os: ubuntu-latest
-            target: armv7-unknown-linux-gnueabihf
-            artifact: numbrs-armv7hf-linux.tar.gz
-            use-cross: true
-
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-musl
-            artifact: numbrs-x86_64-alpine.tar.gz
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-
-      - name: Compile
-        if: ${{ matrix.use-cross != true }}
-        run: cargo build --target ${{ matrix.target }} --all-features --release --locked
-
-      - name: Install cross
-        if: ${{ matrix.use-cross == true }}
-        run: cargo install cross
-
-      - name: Compile (using cross)
-        if: ${{ matrix.use-cross == true }}
-        run: cross build --target ${{ matrix.target }} --all-features --release --locked
-
-      - name: Compress (Windows)
-        if: ${{ contains(matrix.os, 'windows') }}
-        run: ${{ format('Compress-Archive target/{0}/release/numbrs.exe {1}', matrix.target, matrix.artifact) }}
-
-      - name: Compress (macOS)
-        if: ${{ contains(matrix.os, 'macos') }}
-        run: ${{ format('gtar -czvf {1} -C target/{0}/release numbrs', matrix.target, matrix.artifact) }}
-
-      - name: Compress (Linux)
-        if: ${{ contains(matrix.os, 'ubuntu') }}
-        run: ${{ format('tar -czvf {1} -C target/{0}/release numbrs', matrix.target, matrix.artifact) }}
-
-      - name: Upload binary artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.artifact }}
-          path: ${{ matrix.artifact }}
-
-  publish:
-    name: Publish Numbrs binaries
+    name: Build
+    uses: ./.github/workflows/build.yml
+    
+  publish-binaries:
+    name: Upload Numbrs binaries to GitHub release
+    if: ${{ github.event_name == 'release' }}
     needs: [build]
     runs-on: ubuntu-latest
     steps:
@@ -108,13 +29,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # crates-io:
-  #   name: crates.io
-  #   needs: [github]
+  # publish-to-crates-io:
+  #   name: Publish release to crates.io
   #   runs-on: ubuntu-latest
   #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: dtolnay/rust-toolchain@stable
-  #     - run: cargo publish
+  #     - name: Check out sources
+  #       uses: actions/checkout@v3
+  #     - name: Set up Rust toolchain
+  #       uses: dtolnay/rust-toolchain@stable
+  #     - name: Publish to crates.io
+  #       run: cargo publish
   #       env:
   #         CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
