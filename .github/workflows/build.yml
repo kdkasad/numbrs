@@ -1,7 +1,16 @@
-name: Publish Numbrs binaries
+name: Build Numbrs binaries
+
 on:
   release:
-    types: [published]
+  push:
+    branches:
+      - master
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'build.rs'
 
 env:
   CARGO_INCREMENTAL: 0
@@ -104,6 +113,7 @@ jobs:
 
   publish:
     name: Publish Numbrs binaries
+    if: ${{ github.event_name == 'release' }}
     needs: [build]
     runs-on: ubuntu-latest
     steps:
