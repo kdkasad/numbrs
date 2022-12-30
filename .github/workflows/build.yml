@@ -76,10 +76,10 @@ jobs:
             target
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('Cargo.lock') }}
+          key: ${{ matrix.os }}-cargo-${{ matrix.target }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-${{ matrix.target }}-
-            ${{ runner.os }}-cargo-
+            ${{ matrix.os }}-cargo-${{ matrix.target }}-
+            ${{ matrix.os }}-cargo-
 
       - name: Compile
         if: ${{ matrix.use-cross != true }}
