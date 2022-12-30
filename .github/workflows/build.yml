@@ -12,6 +12,7 @@ on:
       - 'Cargo.toml'
       - 'Cargo.lock'
       - 'build.rs'
+      - '.github/workflows/build.yml'
 
 env:
   CARGO_INCREMENTAL: 0
