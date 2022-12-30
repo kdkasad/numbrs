@@ -160,7 +160,7 @@ impl BindingPower for Operation {
     fn prefix_binding_power(&self) -> ((), u32) {
         use Operation::*;
         match self {
-            UnaryAdd | UnarySubtract => ((), 100),
+            UnaryAdd | UnarySubtract => ((), 110),
             Add | Subtract | Multiply | Divide | Raise | Assign | AssignUnit | ConvertUnits => {
                 panic!("Expected (unary) prefix operator, got (binary) infix operator")
             }
