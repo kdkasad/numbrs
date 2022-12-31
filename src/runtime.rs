@@ -89,10 +89,10 @@ impl Runtime {
             Some(prec) => match prec {
                 Value::Number(rat) => match (rat.is_integer(), rat.to_isize()) {
                     (true, Some(precision)) => Ok(value.format(precision)),
-                    _ => Err(RuntimeError::NonIntegerPrecision(prec.clone())),
+                    _ => Err(RuntimeError::NonIntegerPrecision(Box::new(prec.clone()))),
                 },
                 Value::Quantity(_) | Value::Unit(_) => {
-                    Err(RuntimeError::NonIntegerPrecision(prec.clone()))
+                    Err(RuntimeError::NonIntegerPrecision(Box::new(prec.clone())))
                 }
             },
             None => Ok(value.format(Self::DEFAULT_PRECISION)),
@@ -163,7 +163,7 @@ pub enum RuntimeError {
     Eval(#[from] EvalError),
 
     #[error("Got non-integer precision specifier `{}`. Unable to format result.", .0.format(3))]
-    NonIntegerPrecision(Value),
+    NonIntegerPrecision(Box<Value>),
 
     #[error("Can't assign special variable `{0}`")]
     AssignmentProhibited(String),

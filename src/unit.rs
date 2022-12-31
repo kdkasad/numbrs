@@ -305,8 +305,8 @@ impl Display for Units {
 pub fn convert(n: &BigRational, from: &Units, to: &Units) -> Result<BigRational, EvalError> {
     if !from.conforms_to(to) {
         Err(EvalError::ConvertNonConformingUnits(
-            from.clone(),
-            to.clone(),
+            Box::new(from.clone()),
+            Box::new(to.clone()),
         ))
     } else {
         Ok(to.descale(&from.scale(n)))
@@ -324,7 +324,10 @@ impl Quantity {
             self.units = units;
             Ok(self)
         } else {
-            Err(EvalError::ConvertNonConformingUnits(self.units, units))
+            Err(EvalError::ConvertNonConformingUnits(
+                Box::new(self.units),
+                Box::new(units),
+            ))
         }
     }
 }
