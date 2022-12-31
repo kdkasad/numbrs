@@ -91,9 +91,10 @@ impl From<&[i32]> for Dimension {
     /// [1]: BaseQuantity
     fn from(src: &[i32]) -> Self {
         let mut new = Self::new();
-        for i in 0..min(src.len(), BaseQuantity::COUNT) {
-            new.0[i] = src[i];
-        }
+        let max = min(src.len(), BaseQuantity::COUNT);
+        let src = &src[0..max];
+        let dest = &mut new.0[0..max];
+        dest.copy_from_slice(src);
         new
     }
 }
