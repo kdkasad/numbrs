@@ -61,17 +61,80 @@ impl Formatter for Value {
 
 #[cfg(test)]
 mod tests {
-    use pretty_assertions::assert_eq;
+    use ::pretty_assertions::assert_eq;
 
     use super::*;
-    use crate::rat_util_macros::rat;
 
     #[test]
-    fn to_dec_string() {
-        const PRECISION: usize = 3;
-        let cases: Vec<(BigRational, &'static str)> = vec![(rat!(7, 2), "3.500")];
-        for (rat, expected_result) in cases {
-            assert_eq!(rat.format(PRECISION), expected_result);
+    fn number_formatting() {
+        macro_rules! cases {
+            [
+                $( $prec:literal => {
+                    $( $val:literal => $exp:literal ),+ $(,)?
+                } );+ $(;)?
+            ] => {
+                [ $( $(
+                    (stringify!($val), $crate::rat_util_macros::ratf!($val as f64), $prec, $exp),
+                    (
+                        stringify!($val),
+                        $crate::rat_util_macros::ratf!(-$val as f64),
+                        $prec,
+                        if $exp.chars().all(|c| c == '0' || c == '.') { $exp } else { concat!("-", $exp) }
+                    ),
+                 )+ )+ ]
+            };
+        }
+
+        let cases = cases! [
+            -2 => {
+                1234 => "1200",
+                1256 => "1300",
+                1234.5678 => "1200",
+                1256.3478 => "1300",
+                1 => "0",
+                0 => "0",
+                12 => "0",
+                56 => "100",
+                12.34 => "0",
+                56.78 => "100",
+            };
+            -1 => {
+                12 => "10",
+                5 => "10",
+                7 => "10",
+                1 => "0",
+                4 => "0",
+                0 => "0",
+                1234 => "1230",
+                2345.678 => "2350",
+            };
+            0 => {
+                0 => "0",
+                1 => "1",
+                29384 => "29384",
+                123.345 => "123",
+            };
+            1 => {
+                0 => "0.0",
+                1 => "1.0",
+                123 => "123.0",
+                123.5 => "123.5",
+                123.456 => "123.5",
+                123.123 => "123.1",
+            };
+            2 => {
+                0 => "0.00",
+                1 => "1.00",
+                123 => "123.00",
+                987.65 => "987.65",
+                123.456 => "123.46",
+                123.123 => "123.12",
+            };
+        ];
+
+        for (valstr, value, precision, expected) in cases {
+            println!("Rounding {} with precision {} ...", valstr, precision);
+            assert_eq!(expected, value.format(precision));
         }
     }
 }
