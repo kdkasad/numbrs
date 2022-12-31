@@ -43,7 +43,7 @@ fn compile_message(name: &str) -> Result<(), Box<dyn Error>> {
 
     // Create destination file and parent directory
     fs::create_dir_all(dest_dir)?; // create_dir_all() doesn't fail if dir exists
-    let mut outbuf = BufWriter::new(File::create(&out_file)?);
+    let mut outbuf = BufWriter::new(File::create(out_file)?);
 
     // Read message source
     let mut message = String::new();
