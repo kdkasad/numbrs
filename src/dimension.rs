@@ -19,9 +19,24 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-//! Dimension handling for Numbrs.
+//! # Dimension handling
 //!
-//! Dimensions are how units map to physical quantities.
+//! Dimensions are how a [`Unit`][4] maps to a physical quantity.
+//!
+//! A [`Dimension`] is a list of integer exponents, one for each [base physical
+//! quantity][1]. For example, a unit which represents no physical quantity
+//! would have all zeros in the dimension list. The unit `mph` (miles per hour)
+//! would have a dimension list with a *1* for the [Length][2] quantity, a *-1*
+//! for the [Time][3] quantity, and a 0 for all others, because it represents
+//! distance over time.
+//!
+//! A [`BaseQuantity`] is an enum type which represents the possible physical
+//! quantities supported in Numbrs.
+//!
+//! [1]: BaseQuantity
+//! [2]: BaseQuantity::Length
+//! [3]: BaseQuantity::Time
+//! [4]: crate::unit::Unit
 
 use std::{
     cmp::min,
@@ -36,23 +51,38 @@ use strum_macros::{Display, EnumCount as EnumCountMacro, EnumIter, EnumVariantNa
 /// Each variant represents a [basic physical dimension/quantity][1].
 ///
 /// [1]: https://en.wikipedia.org/wiki/Physical_quantity#Dimensions
-#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumCountMacro, EnumIter, EnumVariantNames, Display)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, EnumCountMacro, EnumIter, EnumVariantNames, Display,
+)]
 #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
 pub enum BaseQuantity {
+    /// Length; distance
     Length,
+    /// Mass; amount of matter
     Mass,
+    /// Time; duration
     Time,
+    /// Electric current
     Current,
+    /// Temperature; measure of heat
     Temperature,
+    /// Amount of substance; number of particles
     AmountOfSubstance,
+    /// Photometric light intensity; amount of light
     LuminousIntensity,
+    /// Digital data, e.g. bits and bytes
     Data,
 }
 
-/// Dimension specifier.
+/// # Physical dimension
 ///
 /// Specifies a dimension of measure for units by storing an array of exponents
 /// indexed by base quantities.
+///
+/// See the [`dimension` module][1] documentation for a more detailed
+/// explanation.
+///
+/// [1]: crate::dimension
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Dimension([i32; BaseQuantity::COUNT]);
 
