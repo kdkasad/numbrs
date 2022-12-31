@@ -26,31 +26,55 @@ use num::{BigRational, ToPrimitive};
 use crate::ast::{Quantity, Value};
 
 pub trait Formatter {
-    fn format(&self, precision: usize) -> String;
+    fn format(&self, precision: isize) -> String;
+}
+
+impl Formatter for f64 {
+    fn format(&self, precision: isize) -> String {
+        if precision >= 0 {
+            format!("{:.*}", precision as usize, self)
+        } else {
+            // Flip precision
+            let precision: i32 = precision.unsigned_abs() as i32;
+            let mut num = *self;
+            num /= 10_f64.powi(precision);
+            num = num.round();
+            num *= 10_f64.powi(precision);
+            if num == 0.0 {
+                // Fixes negative zero (-0) case
+                num = 0.0;
+            }
+            format!("{:.0}", num)
+        }
+    }
 }
 
 impl Formatter for BigRational {
     // TODO: support negative precision, i.e. rounding to whole places
-    fn format(&self, precision: usize) -> String {
-        if self.is_integer() {
-            self.numer().to_string()
-        } else if let Some(float) = self.to_f64() {
-            format!("{:.*}", precision, float)
+    fn format(&self, precision: isize) -> String {
+        if !self.is_integer() || precision != 0 {
+            match self.to_f64() {
+                Some(float) => float.format(precision),
+                None => {
+                    // TODO: find a better way to format large rationals
+                    format!("{}/{}", self.numer(), self.denom())
+                }
+            }
         } else {
-            // TODO: find a better way to format large rationals
-            format!("{}/{}", self.numer(), self.denom())
+            // self.is_integer() && precision == 0
+            self.numer().to_string()
         }
     }
 }
 
 impl Formatter for Quantity {
-    fn format(&self, precision: usize) -> String {
+    fn format(&self, precision: isize) -> String {
         format!("{} {}", self.mag.format(precision), self.units)
     }
 }
 
 impl Formatter for Value {
-    fn format(&self, precision: usize) -> String {
+    fn format(&self, precision: isize) -> String {
         match self {
             Value::Number(rat) => rat.format(precision),
             Value::Quantity(q) => q.format(precision),

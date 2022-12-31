@@ -46,7 +46,7 @@ pub struct Runtime {
 }
 
 impl Runtime {
-    const DEFAULT_PRECISION: usize = 5;
+    const DEFAULT_PRECISION: isize = 5;
     const PRECISION_IDENT: &'static str = "_prec";
     pub const UNASSIGN_IDENT: &'static str = "_";
 
@@ -87,18 +87,12 @@ impl Runtime {
     pub fn format(&self, value: &Value) -> Result<String, RuntimeError> {
         match self.env.get(Self::PRECISION_IDENT) {
             Some(prec) => match prec {
-                Value::Number(rat) => {
-                    if rat.is_integer() {
-                        match rat.to_usize() {
-                            Some(precision) => Ok(value.format(precision)),
-                            None => Err(RuntimeError::InvalidPrecision(prec.clone())),
-                        }
-                    } else {
-                        Err(RuntimeError::InvalidPrecision(prec.clone()))
-                    }
-                }
+                Value::Number(rat) => match (rat.is_integer(), rat.to_isize()) {
+                    (true, Some(precision)) => Ok(value.format(precision)),
+                    _ => Err(RuntimeError::NonIntegerPrecision(prec.clone())),
+                },
                 Value::Quantity(_) | Value::Unit(_) => {
-                    Err(RuntimeError::InvalidPrecision(prec.clone()))
+                    Err(RuntimeError::NonIntegerPrecision(prec.clone()))
                 }
             },
             None => Ok(value.format(Self::DEFAULT_PRECISION)),
@@ -168,8 +162,8 @@ pub enum RuntimeError {
     #[error("Evaluation error: {0}")]
     Eval(#[from] EvalError),
 
-    #[error("Got non-natural precision specifier `{}`. Unable to format result.", .0.format(3))]
-    InvalidPrecision(Value),
+    #[error("Got non-integer precision specifier `{}`. Unable to format result.", .0.format(3))]
+    NonIntegerPrecision(Value),
 
     #[error("Can't assign special variable `{0}`")]
     AssignmentProhibited(String),
