@@ -177,40 +177,9 @@ pub enum RuntimeError {
 
 #[cfg(test)]
 mod tests {
-    use std::f64::consts::PI;
-
-    use pretty_assertions::assert_eq;
+    use ::pretty_assertions::assert_eq;
 
     use super::*;
-
-    #[test]
-    fn format() {
-        macro_rules! case {
-            ( $a:expr , $b:expr, $c:expr ) => {
-                (
-                    BigRational::from_float($a as f64).unwrap(),
-                    $b as f64,
-                    stringify!($c),
-                )
-            };
-        }
-
-        let mut rt = Runtime::new();
-        let cases = [
-            case!(13.14159, 2, 13.14),
-            case!(PI, 0, 3),
-            case!(123.456, -1, 120),
-            case!(123.456, 4, 123.4560),
-            case!(19, 2, 19.00),
-            case!(12.345, 1.5, 12.35),
-        ];
-
-        for (value, prec, expected) in cases {
-            // rt.env.insert("_prec".to_string(), prec);
-            rt.evaluate(&format!("_prec = {}", prec)).unwrap();
-            assert_eq!(expected, rt.format(&value.into()).unwrap());
-        }
-    }
 
     #[test]
     fn assign_protected() {
