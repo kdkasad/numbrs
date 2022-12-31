@@ -41,6 +41,7 @@ use crate::{
 ///
 /// Handles storage of variable map and application of user
 /// preferences like output format precision.
+#[derive(Debug)]
 pub struct Runtime {
     env: HashMap<String, Value>,
 }

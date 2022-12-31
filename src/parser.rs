@@ -33,6 +33,7 @@ use crate::{
     operation::Operation,
 };
 
+#[derive(Debug)]
 pub struct Parser {
     tokens: Peekable<Lexer>,
 }
