@@ -19,6 +19,12 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
+// Don't allow unwrapping Results and Options
+#![deny(clippy::unwrap_used)]
+
+// Make compiler warnings fatal
+#![deny(warnings)]
+
 extern crate num;
 extern crate strum;
 extern crate strum_macros;

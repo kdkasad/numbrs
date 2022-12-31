@@ -487,6 +487,7 @@ pub enum EvalError {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use num::Zero;
     use pretty_assertions::assert_eq;

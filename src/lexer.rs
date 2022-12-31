@@ -125,7 +125,7 @@ impl Iterator for Lexer {
                     self.chars.next(); // consume ':'
                     if let Some('=') = self.chars.peek() {
                         self.chars.next(); // consume '='
-                        Some(Token::Operator(Operation::from_str(":=").unwrap()))
+                        Some(Token::Operator(Operation::AssignUnit))
                     } else {
                         Some(Token::Illegal(c))
                     }
@@ -162,7 +162,9 @@ where
     let mut res = String::new();
     while let Some(&c) = chars.peek() {
         if predicate(c) {
-            // use chars.next() to advance the iterator
+            // Use chars.next() to advance the iterator. It's safe to unwrap
+            // because we already peeked the item so it must exist.
+            #[allow(clippy::unwrap_used)]
             res.push(chars.next().unwrap());
         } else {
             break;

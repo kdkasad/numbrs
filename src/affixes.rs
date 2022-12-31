@@ -64,12 +64,11 @@ pub fn resolve_unit(name: &str, env: &HashMap<String, Value>) -> Option<Unit> {
         return Some(unit);
     }
 
-    for suffix in (*SUFFIX_MAP).keys() {
-        let sub: &str = (*SUFFIX_MAP).get(suffix).unwrap();
-        if let Some(part) = name.strip_suffix(suffix) {
+    for (suffix, substitution) in SUFFIX_MAP.iter() {
+        if let Some(base) = name.strip_suffix(suffix) {
             let mut new_name = String::with_capacity(name.len());
-            new_name.push_str(part);
-            new_name.push_str(sub);
+            new_name.push_str(base);
+            new_name.push_str(substitution);
             if let Some(unit) = try_get_unit(&new_name, env) {
                 return Some(unit);
             }

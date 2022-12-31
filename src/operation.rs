@@ -140,7 +140,8 @@ mod tests {
         };
 
         assert_eq!(
-            Operation::unary_try_from("~=").unwrap_err(),
+            Operation::unary_try_from("~=")
+                .expect_err("Creating Operation from invalid operator succeeded"),
             OperationError::InvalidOperatorString(String::from("~="))
         )
     }

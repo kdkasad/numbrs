@@ -248,6 +248,9 @@ impl DivAssign for Units {
     fn div_assign(&mut self, rhs: Self) {
         for mut unit in rhs.0 {
             if self.0.contains(&unit) {
+                // We are sure the element exists because self.0.contains(...)
+                // is true, so we can unwrap.
+                #[allow(clippy::unwrap_used)]
                 self.0
                     .remove(self.0.iter().position(|x| *x == unit).unwrap());
             } else if let Some(idx) = self
@@ -327,6 +330,7 @@ impl Quantity {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use pretty_assertions::assert_eq;
 
