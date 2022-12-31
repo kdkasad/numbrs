@@ -352,23 +352,27 @@ impl Node {
     /// # Examples
     ///
     /// ```
-    /// extern crate num;
-    /// use num::{BigInt, BigRational};
-    /// use numbrs::{
-    ///     ast::{BinaryExpression, Node, Value},
-    ///     operation::Operation,
-    /// };
-    /// use std::collections::HashMap;
-    ///
+    /// # extern crate num;
+    /// # use num::{BigInt, BigRational};
+    /// # use numbrs::{
+    /// #     ast::{BinaryExpression, Node, Value},
+    /// #     operation::Operation,
+    /// # };
+    /// # use std::collections::HashMap;
+    /// # macro_rules! rat {
+    /// #     ( $a:expr ) => {
+    /// #         ::num::BigRational::from_integer(::num::BigInt::from($a))
+    /// #     };
+    /// # }
     /// let tree = Node::from(BinaryExpression::new(
     ///     Operation::Multiply,
     ///     Node::from(rat!(2)),
     ///     Node::from(rat!(3))
     /// ));
-    /// let env = HashMap::new();
-    /// match tree.eval(&env).unwrap() {
-    ///     Value::Number(rat) => {
-    ///         assert_eq!(rat, rat!(6))
+    /// let mut env = HashMap::new();
+    /// match tree.eval(&mut env).unwrap() {
+    ///     Value::Number(val) => {
+    ///         assert_eq!(val, rat!(6))
     ///     }
     ///     _ => unreachable!(),
     /// }
