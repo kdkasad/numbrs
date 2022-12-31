@@ -65,11 +65,11 @@ impl Operable for BigRational {
             .into()),
             Value::Quantity(mut rhs) => match op {
                 Add | Subtract => Err(EvalError::InvalidBinaryOperation(
-                    self.into(),
-                    rhs.into(),
+                    Box::new(self.into()),
+                    Box::new(rhs.into()),
                     op,
                 )),
-                Raise => Err(EvalError::NonIntegerExponent(rhs.into())),
+                Raise => Err(EvalError::NonIntegerExponent(Box::new(rhs.into()))),
                 Multiply => {
                     rhs.mag *= self;
                     Ok(rhs.into())
@@ -88,11 +88,11 @@ impl Operable for BigRational {
                     Ok(Quantity::new(self, rhs).into())
                 }
                 Add | Subtract => Err(EvalError::InvalidBinaryOperation(
-                    self.into(),
-                    rhs.into(),
+                    Box::new(self.into()),
+                    Box::new(rhs.into()),
                     op,
                 )),
-                Raise => Err(EvalError::NonIntegerExponent(rhs.into())),
+                Raise => Err(EvalError::NonIntegerExponent(Box::new(rhs.into()))),
                 Assign | AssignUnit | UnaryAdd | UnarySubtract | ConvertUnits => unreachable!(),
             },
         }
@@ -129,11 +129,12 @@ impl Operable for Quantity {
                     Add | Subtract => {
                         if !self.units.conforms_to(&rhs.units) {
                             return Err(EvalError::ConvertNonConformingUnits(
-                                self.units, rhs.units,
+                                Box::new(self.units),
+                                Box::new(rhs.units),
                             ));
                         }
                     }
-                    Raise => return Err(EvalError::NonIntegerExponent(rhs.into())),
+                    Raise => return Err(EvalError::NonIntegerExponent(Box::new(rhs.into()))),
                     Multiply | Divide => (), // valid case, do nothing
                     UnaryAdd | UnarySubtract | Assign | AssignUnit | ConvertUnits => unreachable!(),
                 }
@@ -163,8 +164,8 @@ impl Operable for Quantity {
 
             Value::Number(rhs) => match op {
                 Add | Subtract => Err(EvalError::InvalidBinaryOperation(
-                    self.into(),
-                    rhs.into(),
+                    Box::new(self.into()),
+                    Box::new(rhs.into()),
                     op,
                 )),
 
@@ -183,10 +184,10 @@ impl Operable for Quantity {
                             self.units.pow_assign(exp);
                             Ok(self.into())
                         } else {
-                            Err(EvalError::NonIntegerExponent(rhs.into()))
+                            Err(EvalError::NonIntegerExponent(Box::new(rhs.into())))
                         }
                     } else {
-                        Err(EvalError::NonIntegerExponent(rhs.into()))
+                        Err(EvalError::NonIntegerExponent(Box::new(rhs.into())))
                     }
                 }
 
@@ -202,11 +203,11 @@ impl Operable for Quantity {
                     Ok(self.into())
                 }
                 Add | Subtract => Err(EvalError::InvalidBinaryOperation(
-                    self.into(),
-                    rhs.into(),
+                    Box::new(self.into()),
+                    Box::new(rhs.into()),
                     op,
                 )),
-                Raise => Err(EvalError::NonIntegerExponent(rhs.into())),
+                Raise => Err(EvalError::NonIntegerExponent(Box::new(rhs.into()))),
                 UnaryAdd | UnarySubtract | Assign | AssignUnit | ConvertUnits => unreachable!(),
             },
         }
@@ -267,11 +268,11 @@ impl Operable for Units {
                     Ok(rhs.into())
                 }
                 Add | Subtract => Err(EvalError::InvalidBinaryOperation(
-                    self.into(),
-                    rhs.into(),
+                    Box::new(self.into()),
+                    Box::new(rhs.into()),
                     op,
                 )),
-                Raise => Err(EvalError::NonIntegerExponent(rhs.into())),
+                Raise => Err(EvalError::NonIntegerExponent(Box::new(rhs.into()))),
                 Assign | AssignUnit | UnaryAdd | UnarySubtract | ConvertUnits => unreachable!(),
             },
             Value::Number(rhs) => match op {
@@ -281,18 +282,18 @@ impl Operable for Units {
                             self.pow_assign(exp);
                             Ok(self.into())
                         } else {
-                            Err(EvalError::NonIntegerExponent(rhs.into()))
+                            Err(EvalError::NonIntegerExponent(Box::new(rhs.into())))
                         }
                     } else {
-                        Err(EvalError::NonIntegerExponent(rhs.into()))
+                        Err(EvalError::NonIntegerExponent(Box::new(rhs.into())))
                     }
                 }
                 Multiply => Ok(Quantity::new(rhs, self).into()),
                 Divide => Ok(Quantity::new(rhs.recip(), self).into()),
 
                 Add | Subtract => Err(EvalError::InvalidBinaryOperation(
-                    self.into(),
-                    rhs.into(),
+                    Box::new(self.into()),
+                    Box::new(rhs.into()),
                     op,
                 )),
                 Assign | AssignUnit | UnaryAdd | UnarySubtract | ConvertUnits => unreachable!(),
@@ -301,11 +302,11 @@ impl Operable for Units {
                 Multiply => Ok(Value::from(self * rhs)),
                 Divide => Ok(Value::from(self / rhs)),
                 Add | Subtract => Err(EvalError::InvalidBinaryOperation(
-                    self.into(),
-                    rhs.into(),
+                    Box::new(self.into()),
+                    Box::new(rhs.into()),
                     op,
                 )),
-                Raise => Err(EvalError::NonIntegerExponent(rhs.into())),
+                Raise => Err(EvalError::NonIntegerExponent(Box::new(rhs.into()))),
                 Assign | AssignUnit | UnaryAdd | UnarySubtract | ConvertUnits => unreachable!(),
             },
         }
@@ -313,7 +314,7 @@ impl Operable for Units {
 
     fn unary_op(self, op: Operation) -> Result<Value, EvalError> {
         // Unary operations don't make sense on unit types
-        Err(EvalError::InvalidUnaryOperation(self.into(), op))
+        Err(EvalError::InvalidUnaryOperation(Box::new(self.into()), op))
     }
 }
 
@@ -339,10 +340,10 @@ fn bigrational_pow(lhs: BigRational, rhs: BigRational) -> Result<BigRational, Ev
     if rhs.is_integer() {
         match rhs.numer().to_i32() {
             Some(exp) => Ok(lhs.pow(exp)),
-            None => Err(EvalError::NonIntegerExponent(rhs.into())),
+            None => Err(EvalError::NonIntegerExponent(Box::new(rhs.into()))),
         }
     } else {
-        Err(EvalError::NonIntegerExponent(rhs.into()))
+        Err(EvalError::NonIntegerExponent(Box::new(rhs.into())))
     }
 }
 
@@ -398,8 +399,8 @@ impl Node {
                         Ok(lhs.convert_to(units)?.into())
                     } else {
                         Err(EvalError::InvalidBinaryOperation(
-                            lhs.into(),
-                            rhs,
+                            Box::new(lhs.into()),
+                            Box::new(rhs),
                             node.operation,
                         ))
                     }
@@ -469,10 +470,10 @@ where
 #[derive(Error, Debug)]
 pub enum EvalError {
     #[error("Invalid operation `{2}` for types {0} and {1}")]
-    InvalidBinaryOperation(Value, Value, Operation),
+    InvalidBinaryOperation(Box<Value>, Box<Value>, Operation),
 
     #[error("Cannot convert between units that describe different quantities: `{0}` and `{1}`")]
-    ConvertNonConformingUnits(Units, Units),
+    ConvertNonConformingUnits(Box<Units>, Box<Units>),
 
     #[error("Expected {0} operation, found {1} operation `{2}`")]
     ExpectedOperation(&'static str, &'static str, Operation),
@@ -481,13 +482,13 @@ pub enum EvalError {
     UndefinedVariable(String),
 
     #[error("Only integer number exponents are supported, not `{0}`")]
-    NonIntegerExponent(Value),
+    NonIntegerExponent(Box<Value>),
 
     #[error("Invalid LHS for assignment operation")]
     InvalidAssignmentLHS,
 
     #[error("Invalid unary operation `{1}` for type `{0}`")]
-    InvalidUnaryOperation(Value, Operation),
+    InvalidUnaryOperation(Box<Value>, Operation),
 }
 
 #[cfg(test)]
