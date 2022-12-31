@@ -18,7 +18,7 @@
 ##
 
 [package]
-name = "Numbrs"
+name = "numbrs"
 description = "A text-based calculator written in Rust"
 version = "1.2.1"
 

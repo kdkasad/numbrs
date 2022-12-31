@@ -50,9 +50,15 @@ fn compile_message(name: &str) -> Result<(), Box<dyn Error>> {
 
     // Perform simple substitutions
     replace_with_env! { message;
-        "PROGNAME" -> "CARGO_PKG_NAME",
         "VERSION" -> "CARGO_PKG_VERSION",
     };
+
+    // Perform program name substitution
+    let progname = env::var("CARGO_PKG_NAME")?;
+    let mut chars = progname.chars();
+    let progname: String =
+        chars.next().unwrap().to_uppercase().collect::<String>() + chars.as_str();
+    message = message.replace("%PROGNAME%", &progname);
 
     // Perform author substitution
     let authors: String = env::var("CARGO_PKG_AUTHORS")?;
