@@ -33,6 +33,9 @@ jobs:
       - name: Cache build artifacts
         uses: Swatinem/rust-cache@v2
 
+      - name: Lint code
+        run: cargo clippy --all-targets --all-features
+
       - name: Compile tests
         run: cargo test --workspace --all-features --no-fail-fast --no-run --locked
 
