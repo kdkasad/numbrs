@@ -13,6 +13,10 @@ on:
       - 'Cargo.lock'
       - 'build.rs'
       - '.github/workflows/build.yml'
+  pull_request:
+    branches:
+      - master
+      - 'release/*'
 
 env:
   CARGO_INCREMENTAL: 0
