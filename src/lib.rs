@@ -22,16 +22,6 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 // Don't allow unwrapping Results and Options
 #![deny(clippy::unwrap_used)]
 
-extern crate num;
-extern crate strum;
-extern crate strum_macros;
-extern crate thiserror;
-#[macro_use]
-extern crate lazy_static;
-
-#[cfg(test)]
-extern crate pretty_assertions;
-
 pub mod affixes;
 pub mod ast;
 pub mod dimension;

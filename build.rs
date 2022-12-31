@@ -1,6 +1,3 @@
-extern crate cargo_metadata;
-extern crate glob;
-
 use std::{
     env,
     error::Error,

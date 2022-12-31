@@ -21,6 +21,7 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 use std::collections::HashMap;
 
+use lazy_static::lazy_static;
 use num::BigRational;
 
 use crate::{ast::Value, rat_util_macros::rat, unit::Unit};

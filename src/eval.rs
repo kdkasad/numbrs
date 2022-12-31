@@ -353,7 +353,6 @@ impl Node {
     /// # Examples
     ///
     /// ```
-    /// # extern crate num;
     /// # use num::{BigInt, BigRational};
     /// # use numbrs::{
     /// #     ast::{BinaryExpression, Node, Value},

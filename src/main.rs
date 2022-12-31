@@ -20,8 +20,6 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-extern crate rustyline;
-
 use numbrs::runtime::Runtime;
 use rustyline::{error::ReadlineError, Editor};
 
