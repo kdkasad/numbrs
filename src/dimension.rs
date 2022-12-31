@@ -38,7 +38,7 @@ use strum_macros::{Display, EnumCount as EnumCountMacro, EnumIter, EnumVariantNa
 /// [1]: https://en.wikipedia.org/wiki/Physical_quantity#Dimensions
 #[derive(Debug, Clone, Copy, PartialEq, Eq, EnumCountMacro, EnumIter, EnumVariantNames, Display)]
 #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
-pub(crate) enum BaseQuantity {
+pub enum BaseQuantity {
     Length,
     Mass,
     Time,
