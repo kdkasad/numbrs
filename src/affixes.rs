@@ -19,6 +19,24 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
+/*!
+
+# Unit prefix and suffix handling
+
+When using units, it is often useful to automatically process prefixes and
+suffixes for unit names (collectively *affixes*).
+
+Prefixes scale a unit by some amount. For example, `kilogram` means `1000 *
+gram`.
+
+Suffixes are used to make plural units seem more natural, like interpreting
+`10 minutes` as `10 * minute`.
+
+The list of standard prefixes and suffixes are accessed using
+[`standard_prefixes()`] and [`standard_suffixes()`], respectively.
+
+*/
+
 use std::collections::HashMap;
 
 use num::BigRational;
@@ -26,6 +44,18 @@ use once_cell::sync::Lazy;
 
 use crate::{ast::Value, rat_util_macros::rat, unit::Unit};
 
+/// # Unit name prefix type
+///
+/// A [`Prefix`] contains a text value, a scale, and a standalone flag.
+///
+/// The text value is the string that goes before a unit name, e.g. `kilo`.
+///
+/// The scale is the number to multiply times the prefixed [`Unit`]. For
+/// example, the prefix `kilo` has a scale of *1,000*.
+///
+/// The standalone flag determines whether the prefix can be used as a
+/// standalone variable which represents its scale as a numeric value. See
+/// [`Prefix::standalone()`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Prefix {
     text: String,
@@ -34,7 +64,7 @@ pub struct Prefix {
 }
 
 impl Prefix {
-    /// Create a new prefix.
+    /// Create a new [`Prefix`].
     pub fn new(text: &str, scale: BigRational, standalone: bool) -> Self {
         Self {
             text: text.to_owned(),
@@ -43,12 +73,13 @@ impl Prefix {
         }
     }
 
-    /// Get a reference to the prefix's text.
+    /// Get the prefix's text.
     pub fn text(&self) -> &str {
         self.text.as_ref()
     }
 
-    /// Get a reference to the prefix's scale.
+    /// Get a the prefix's scale, i.e. the value to multiply times the prefixed
+    /// [`Unit`].
     pub fn scale(&self) -> &BigRational {
         &self.scale
     }
@@ -139,11 +170,11 @@ macro_rules! prefixes {
 }
 
 /// # Standard prefixes for units.
-/// 
+///
 /// This function returns a static slice of [`Prefix`] items which makes up the
 /// list of standard unit prefixes.
 ///
-/// Contains both [SI][1] and [IEC][2] prefixes.
+/// Contains the short and long forms of both the [SI][1] and [IEC][2] prefixes.
 /// Mostly derived from <https://frinklang.org/frinkdata/units.txt>.
 ///
 /// [1]: https://en.wikipedia.org/wiki/International_System_of_Units#Prefixes
@@ -219,9 +250,9 @@ pub fn standard_prefixes() -> &'static [Prefix] {
 }
 
 /// # Standard suffixes for units
-/// 
+///
 /// This function returns a static slice of string pairs.
-/// 
+///
 /// Each pair contains a plural suffix and its equivalent singular form.
 ///
 /// For example, `henries` is the plural of `henry` so the suffix `ies` maps to
@@ -235,7 +266,7 @@ pub fn standard_suffixes() -> &'static [(&'static str, &'static str)] {
 mod tests {
     use super::*;
 
-    /// Just test the first two prefixes to make sure the assignment works.
+    /// Ensure the list of standard prefixes is generating as expected.
     #[test]
     fn std_prefixes() {
         assert!(standard_prefixes().contains(&Prefix::new("yotta", rat!(10).pow(24), true)));
