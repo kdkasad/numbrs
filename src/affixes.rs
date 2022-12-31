@@ -82,7 +82,7 @@ pub fn resolve_unit(name: &str, env: &HashMap<String, Value>) -> Option<Unit> {
 /// Attempt to look up a unit with prefix substitution.
 fn try_get_unit(name: &str, env: &HashMap<String, Value>) -> Option<Unit> {
     if let Some(Value::Unit(units)) = env.get(name) {
-        return Some(units.collapse_to(name.to_string()));
+        return Some(units.collapse_to(name));
     }
 
     // Search for existing unit by stripping available prefixes
@@ -94,7 +94,7 @@ fn try_get_unit(name: &str, env: &HashMap<String, Value>) -> Option<Unit> {
                 }
                 // If a unit definition is found, create a new Unit with the
                 // prefixed name and adjusted scale.
-                let mut new = units.collapse_to(name.to_string());
+                let mut new = units.collapse_to(name);
                 new.scale *= prefix.scale();
                 return Some(new);
             }

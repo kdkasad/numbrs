@@ -426,21 +426,16 @@ impl Node {
 ///
 /// Returns the [Value] of the RHS wrapped in a [Result], or an [EvalError] on
 /// failure.
-fn handle_assignment<T>(
-    name: T,
+fn handle_assignment(
+    name: &str,
     rhs: Node,
     unit: bool,
     env: &mut HashMap<String, Value>,
-) -> Result<Value, EvalError>
-where
-    T: ToString,
-{
-    let name = name.to_string();
-
+) -> Result<Value, EvalError> {
     // If RHS = Variable("_"), remove LHS from environment
     if let Node::Variable(rvar) = &rhs {
         if rvar.name() == Runtime::UNASSIGN_IDENT {
-            env.remove(&name);
+            env.remove(name);
             return Ok(BigRational::zero().into());
         }
     }
@@ -452,18 +447,18 @@ where
     if unit {
         rval = Value::from(Units::from([match rval {
             Value::Quantity(q) => Unit::new(
-                name.clone(),
+                name,
                 1,
                 q.mag * q.units.aggregate_scales(),
                 rat!(0),
                 q.units.dimension(),
             ),
-            Value::Unit(units) => units.collapse_to(name.clone()),
-            Value::Number(rat) => Unit::new(name.clone(), 1, rat, rat!(0), Dimension::new()),
+            Value::Unit(units) => units.collapse_to(name),
+            Value::Number(rat) => Unit::new(name, 1, rat, rat!(0), Dimension::new()),
         }]))
     }
 
-    env.insert(name, rval.clone());
+    env.insert(name.to_owned(), rval.clone());
     Ok(rval)
 }
 
