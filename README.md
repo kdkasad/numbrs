@@ -198,8 +198,12 @@ It is possible to specify the precision with which to output numbers using the
 When `_prec` is set, results will be printed with `_prec` decimal places.
 By default, this variable is set to the value `5`.
 
-The number stored in `_prec` must be a natural number (i.e. positive integer).
-If a non-natural value is assigned, an error occurs and a message is printed.
+The number stored in `_prec` must be an integer.
+If a non-integer value is assigned, an error occurs and a message is printed.
+
+The positive value *N* will round to *N* places to the right of the decimal
+point. The negative value *-N* will round so that *N* places to the left of the
+decimal point contain zeros.
 
 ### Units
 
