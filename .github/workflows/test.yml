@@ -1,0 +1,39 @@
+name: Run tests
+
+on:
+  push:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "examples/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "build.rs"
+      - ".github/workflows/test.yml"
+  pull_request:
+    branches:
+      - master
+      - "release/*"
+
+env:
+  RUST_BACKTRACE: short
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v3
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache build artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Compile tests
+        run: cargo test --workspace --all-features --no-fail-fast --no-run --locked
+
+      - name: Run tests
+        run: cargo test --workspace --all-features --no-fail-fast
