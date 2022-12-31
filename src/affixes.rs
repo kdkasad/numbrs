@@ -35,9 +35,9 @@ pub struct Prefix {
 
 impl Prefix {
     /// Create a new prefix.
-    pub fn new<T: ToString>(text: T, scale: BigRational, standalone: bool) -> Self {
+    pub fn new(text: &str, scale: BigRational, standalone: bool) -> Self {
         Self {
-            text: text.to_string(),
+            text: text.to_owned(),
             scale,
             standalone,
         }
