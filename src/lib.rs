@@ -21,6 +21,16 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 // Don't allow unwrapping Results and Options
 #![deny(clippy::unwrap_used)]
+// Warn about additional compiler diagnostics. These don't affect the behavior
+// or performance of Numbrs, but they generally lead to cleaner code.
+#![warn(
+    missing_docs,
+    missing_copy_implementations,
+    missing_debug_implementations,
+    unreachable_pub,
+    unused_extern_crates,
+    macro_use_extern_crate
+)]
 
 //! # Numbrs
 //!
