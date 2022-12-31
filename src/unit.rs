@@ -71,15 +71,15 @@ impl Unit {
     }
 
     /// Creates an new unit
-    pub fn new<T: ToString>(
-        name: T,
+    pub fn new(
+        name: &str,
         exponent: i32,
         scale: BigRational,
         offset: BigRational,
         dimension: Dimension,
     ) -> Self {
         Self {
-            name: name.to_string(),
+            name: name.to_owned(),
             exponent,
             scale,
             offset,
@@ -204,14 +204,8 @@ impl Units {
     }
 
     /// Create a new [Unit] identical to this [Units] list.
-    pub fn collapse_to(&self, name: String) -> Unit {
-        Unit::new(
-            name.clone(),
-            1,
-            self.aggregate_scales(),
-            rat!(0),
-            self.dimension(),
-        )
+    pub fn collapse_to(&self, name: &str) -> Unit {
+        Unit::new(name, 1, self.aggregate_scales(), rat!(0), self.dimension())
     }
 }
 
@@ -502,20 +496,8 @@ mod tests {
     /// Test conversion of pure quantities
     #[test]
     fn convert_pure() {
-        let a = Units::from([Unit::new(
-            "a".to_string(),
-            1,
-            rat!(5),
-            rat!(0),
-            Dimension::default(),
-        )]);
-        let b = Units::from([Unit::new(
-            "b".to_string(),
-            1,
-            rat!(3),
-            rat!(0),
-            Dimension::default(),
-        )]);
+        let a = Units::from([Unit::new("a", 1, rat!(5), rat!(0), Dimension::default())]);
+        let b = Units::from([Unit::new("b", 1, rat!(3), rat!(0), Dimension::default())]);
 
         let mut val = rat!(3);
         val = convert(&val, &a, &b).unwrap();

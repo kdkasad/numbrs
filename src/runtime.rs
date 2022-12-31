@@ -104,14 +104,10 @@ impl Runtime {
 fn create_base_units(env: &mut HashMap<String, Value>) {
     for variant in BaseQuantity::iter() {
         let name = variant.to_string();
-
         let mut dimension = Dimension::new();
         dimension[variant] = 1;
-
-        env.insert(
-            name.clone(),
-            Units::from(vec![Unit::new(name, 1, rat!(1), rat!(0), dimension)]).into(),
-        );
+        let units = Units::from(vec![Unit::new(&name, 1, rat!(1), rat!(0), dimension)]);
+        env.insert(name, units.into());
     }
 }
 
