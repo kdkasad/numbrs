@@ -22,6 +22,18 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 // Don't allow unwrapping Results and Options
 #![deny(clippy::unwrap_used)]
 
+//! # Numbrs
+//!
+//! Numbrs is a calculator that supports unit conversions.
+//!
+//! See the `README.md` file in the source repository for detailed documentation
+//! about Numbrs.
+//!
+//! See the [`Runtime`][1] struct for a runtime which can be used to integrate
+//! Numbrs into an application.
+//!
+//! [1]: crate::runtime::Runtime
+
 pub mod affixes;
 pub mod ast;
 pub mod dimension;
