@@ -17,6 +17,7 @@ on:
 
 env:
   RUST_BACKTRACE: short
+  RUSTFLAGS: '-D warnings'
 
 jobs:
   test:
