@@ -86,7 +86,7 @@ where
                 }
                 Token::Operator(op) => {
                     if let Some(op) = op.try_to_unary() {
-                        let ((), r_bp) = op.prefix_binding_power();
+                        let ((), r_bp) = prefix_binding_power(op);
                         let expr = self.parse_expr(r_bp)?;
                         Node::from(UnaryExpression {
                             operation: op,
@@ -116,7 +116,7 @@ where
                 Token::Illegal(c) => return Err(ParseError::IllegalToken(c)),
             };
 
-            let (l_bp, r_bp) = op.infix_binding_power(implicit);
+            let (l_bp, r_bp) = infix_binding_power(op, implicit);
             if l_bp < min_bp {
                 break;
             }
@@ -149,41 +149,34 @@ fn str_to_num(src: &str) -> Result<BigRational, ParseError> {
     }
 }
 
-pub trait BindingPower {
-    fn infix_binding_power(&self, implicit: bool) -> (u32, u32);
-    fn prefix_binding_power(&self) -> ((), u32);
-}
-
-impl BindingPower for Operation {
-    fn infix_binding_power(&self, implicit: bool) -> (u32, u32) {
-        use Operation::*;
-        let mut result = match self {
-            Assign | AssignUnit => (105, 10),
-            Add | Subtract => (30, 35),
-            ConvertUnits => (40, 45),
-            Multiply | Divide => (50, 55),
-            Raise => (60, 65),
-            UnaryAdd | UnarySubtract => {
-                panic!("Expected (binary) infix operator, got unary operator")
-            }
-        };
-
-        // Prioritize implicit operations over their explicit counterparts
-        if implicit {
-            result.0 += 2;
-            result.1 += 2;
+fn infix_binding_power(op: Operation, implicit: bool) -> (u32, u32) {
+    use Operation::*;
+    let mut result = match op {
+        Assign | AssignUnit => (105, 10),
+        Add | Subtract => (30, 35),
+        ConvertUnits => (40, 45),
+        Multiply | Divide => (50, 55),
+        Raise => (60, 65),
+        UnaryAdd | UnarySubtract => {
+            panic!("Expected (binary) infix operator, got unary operator")
         }
+    };
 
-        result
+    // Prioritize implicit operations over their explicit counterparts
+    if implicit {
+        result.0 += 2;
+        result.1 += 2;
     }
 
-    fn prefix_binding_power(&self) -> ((), u32) {
-        use Operation::*;
-        match self {
-            UnaryAdd | UnarySubtract => ((), 110),
-            Add | Subtract | Multiply | Divide | Raise | Assign | AssignUnit | ConvertUnits => {
-                panic!("Expected (unary) prefix operator, got (binary) infix operator")
-            }
+    result
+}
+
+fn prefix_binding_power(op: Operation) -> ((), u32) {
+    use Operation::*;
+    match op {
+        UnaryAdd | UnarySubtract => ((), 110),
+        Add | Subtract | Multiply | Divide | Raise | Assign | AssignUnit | ConvertUnits => {
+            panic!("Expected (unary) prefix operator, got (binary) infix operator")
         }
     }
 }
