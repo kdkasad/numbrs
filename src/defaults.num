@@ -17,6 +17,8 @@
 ## along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 ##
 
+# TODO: Add Imperial units
+
 # Numerical constants
 pi := 3.141592653589793238
 e := 2.71828182845904523536
