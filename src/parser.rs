@@ -34,17 +34,36 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct Parser {
-    tokens: Peekable<Lexer>,
+pub struct Parser<I>
+where
+    I: Iterator<Item = Token>,
+{
+    tokens: Peekable<I>,
 }
 
-impl Parser {
-    pub fn new(src: &str) -> Self {
+impl<'a> Parser<Lexer<'a>> {
+    /// Create a new [`Parser`] from a string slice.
+    ///
+    /// Under the hood, this creates a new [`Lexer`] for the string and then
+    /// calls [`Parser::from()`] on that.
+    pub fn new(src: &'a str) -> Self {
+        Self::from(Lexer::new(src))
+    }
+}
+
+impl<'a> From<Lexer<'a>> for Parser<Lexer<'a>> {
+    /// Create a new [`Parser`] from a [`Lexer`].
+    fn from(lexer: Lexer<'a>) -> Self {
         Self {
-            tokens: Lexer::new(src).peekable(),
+            tokens: lexer.peekable(),
         }
     }
+}
 
+impl<I> Parser<I>
+where
+    I: Iterator<Item = Token>,
+{
     /// Parse the input token stream into a tree of [Nodes][Node].
     pub fn parse(mut self) -> Result<Node, ParseError> {
         self.parse_expr(0)

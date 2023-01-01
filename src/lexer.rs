@@ -43,7 +43,10 @@ assert_eq!(lexer.next(), None);
 
 */
 
-use std::{iter::Peekable, str::FromStr, vec::IntoIter};
+use std::{
+    iter::Peekable,
+    str::{Chars, FromStr},
+};
 
 use strum_macros::{Display, IntoStaticStr};
 
@@ -70,20 +73,20 @@ pub enum Token {
 ///
 /// See [module-level][crate::lexer] documentation for examples.
 #[derive(Clone, Debug)]
-pub struct Lexer {
-    chars: Peekable<IntoIter<char>>,
+pub struct Lexer<'a> {
+    chars: Peekable<Chars<'a>>,
 }
 
-impl Lexer {
-    /// Create a new Lexer using a string reference as the source
-    pub fn new(src: &str) -> Self {
+impl<'a> Lexer<'a> {
+    /// Create a new [`Lexer`] for an expression string.
+    pub fn new(src: &'a str) -> Self {
         Self {
-            chars: src.chars().collect::<Vec<_>>().into_iter().peekable(),
+            chars: src.chars().peekable(),
         }
     }
 }
 
-impl Iterator for Lexer {
+impl Iterator for Lexer<'_> {
     type Item = Token;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -96,7 +99,7 @@ impl Iterator for Lexer {
                 } else if c.is_numeric() || c == '.' {
                     // c is a digit
                     // collect contiguous digits and return number token
-                    Some(Token::Number(collect_chars(&mut self.chars, |c| {
+                    Some(Token::Number(collect_chars(&mut self.chars, |&c| {
                         c.is_numeric() || c == '.'
                     })))
                 } else if "({[".contains(c) {
@@ -113,7 +116,7 @@ impl Iterator for Lexer {
                 } else if c.is_alphabetic() || c == '_' {
                     // c is alphabetic or underscore
                     // collect contiguous ident chars
-                    let ident = collect_chars(&mut self.chars, |c| c.is_alphabetic() || c == '_');
+                    let ident = collect_chars(&mut self.chars, |&c| c.is_alphabetic() || c == '_');
                     Some(if let Ok(op) = Operation::from_str(&ident) {
                         // check if identifier is a word operator
                         Token::Operator(op)
@@ -155,20 +158,13 @@ impl Iterator for Lexer {
 /// assert_eq!(collect_chars(&mut chars, |c| !c.is_numeric()), " + ".to_string());
 /// assert_eq!(collect_chars(&mut chars, |c| c.is_numeric()), "456".to_string());
 /// ```
-fn collect_chars<F>(chars: &mut Peekable<IntoIter<char>>, predicate: F) -> String
+fn collect_chars<F>(chars: &mut Peekable<Chars>, predicate: F) -> String
 where
-    F: Fn(char) -> bool,
+    F: Fn(&char) -> bool,
 {
     let mut res = String::new();
-    while let Some(&c) = chars.peek() {
-        if predicate(c) {
-            // Use chars.next() to advance the iterator. It's safe to unwrap
-            // because we already peeked the item so it must exist.
-            #[allow(clippy::unwrap_used)]
-            res.push(chars.next().unwrap());
-        } else {
-            break;
-        }
+    while let Some(c) = chars.next_if(&predicate) {
+        res.push(c);
     }
     res
 }
