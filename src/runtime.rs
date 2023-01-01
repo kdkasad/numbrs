@@ -19,7 +19,44 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-//! Execution runtime for Numbrs.
+/*!
+# Numbrs execution runtime
+
+This module contains types and functions that provide a runtime for Numbrs.
+The runtime unifies parsing and evaluating expressions into one API. It also
+maintains the environment map.
+
+The runtime also contains its own [`Runtime::format()`] function which
+formats a [`Value`] using the precision stored in the variable by the name
+of [`PRECISION_IDENT`][2] (currently `_prec`).
+
+[2]: Runtime::PRECISION_IDENT
+
+## Examples
+
+This code snippet uses a [`Runtime`] to implement a basic command-line
+[REPL][1]:
+
+```no_run
+use numbrs::runtime::Runtime;
+
+let mut rt = Runtime::new();
+rt.load_defaults();
+for line in std::io::stdin().lines() {
+    let input = line.unwrap();
+    let value = rt.evaluate(&input)?;
+    println!("Result: {}", rt.format(&value)?);
+}
+# Ok::<(), numbrs::runtime::RuntimeError>(())
+```
+
+Also see `src/main.rs`. While it is the source for the main Numbrs binary,
+it suffices as an example of how to use the Numbrs runtime because it's
+quite short. It's just a command-line wrapper around that uses the Numbrs
+runtime to process input.
+
+[1]: https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop
+*/
 
 use std::collections::HashMap;
 
@@ -37,20 +74,42 @@ use crate::{
     unit::{Unit, Units},
 };
 
-/// Execution runtime for Numbrs.
+/// # Numbrs execution runtime
 ///
-/// Handles storage of variable map and application of user
-/// preferences like output format precision.
+/// Handles storage of variable map and application of user preferences like
+/// output format precision.
+///
+/// See the [module-level documentation][1] for details and examples.
+///
+/// [1]: crate::runtime
 #[derive(Debug)]
 pub struct Runtime {
     env: HashMap<String, Value>,
 }
 
 impl Runtime {
+    /// Default precision for formatting result values.
+    ///
+    /// See [`Formatter::format()`] for details.
     pub const DEFAULT_PRECISION: isize = 5;
+    /// Name of the variable which stores the formatting precision.
+    ///
+    /// The [`Runtime`] will use the value of the variable with this name as the
+    /// precision to use in [`Runtime::format()`].
     pub const PRECISION_IDENT: &'static str = "_prec";
+    /// Unassignment identifier.
+    ///
+    /// This identifier has a value of zero (*0*). It is special in that when it
+    /// is assigned to a variable, that variable is removed from the
+    /// environment. See [`Runtime::evaluate()`] for more details.
     pub const UNASSIGN_IDENT: &'static str = "_";
 
+    /// # Create a new [`Runtime`].
+    ///
+    /// Sets the environment to an empty map with two exceptions:
+    ///  - *0* is assigned to the identifier [`Self::UNASSIGN_IDENT`]
+    ///  - [`Self::DEFAULT_PRECISION`] is assigned to the identifier
+    ///    [`Self::PRECISION_IDENT`].
     pub fn new() -> Self {
         let mut env: HashMap<String, Value> = HashMap::new();
         env.insert(Self::UNASSIGN_IDENT.to_string(), BigRational::zero().into());
@@ -64,9 +123,15 @@ impl Runtime {
         Self { env }
     }
 
-    /// Load default unit definitions.
+    /// # Load default unit definitions.
     ///
-    /// Defaults are defined in `src/defaults.num`.
+    /// Default units are defined in `src/defaults.num`. They consist of many of
+    /// the [SI][1] units and will contain [Imperial][2] units as well in the
+    /// future.
+    ///
+    /// [1]: https://en.wikipedia.org/wiki/International_System_of_Units
+    /// [2]:
+    ///     https://en.wikipedia.org/wiki/Imperial_and_US_customary_measurement_systems#Units_in_use
     pub fn load_defaults(&mut self) -> Result<(), RuntimeError> {
         const DEFAULTS_SRC: &str = include_str!("defaults.num");
         // Filter out comments and empty lines
@@ -79,12 +144,66 @@ impl Runtime {
         Ok(())
     }
 
+    /// # Evaluate an expression string.
+    ///
+    /// Parses and evaluates the expression string `input` and returns the
+    /// resulting [`Value`]. See the [parser][2] and [eval][3] modules for
+    /// details on what that entails.
+    ///
+    /// [2]: crate::parser
+    /// [3]: crate::eval
+    ///
+    /// ## Errors
+    ///
+    /// This function returns a [`RuntimeError`] when it fails.
+    ///
+    /// Errors returned by [`Parser::parse()`] and [`Node::eval()`] are
+    /// propagated. The [`ParseError`] and [`EvalError`] types are encapsulated
+    /// in [`RuntimeError::Parse`] and [`RuntimeError::Eval`], respectively.
+    ///
+    /// This function will also return [`RuntimeError::AssignmentProhibited`]
+    /// when attempting to assign to the [unassignment identifier][1] or to the
+    /// name of any base quantity (see [`BaseQuantity::VARIANTS`]).
+    ///
+    /// [1]: Runtime::UNASSIGN_IDENT
+    ///
+    /// ## Example
+    /// ```
+    /// # use numbrs::{
+    /// #     eval::EvalError,
+    /// #     runtime::{Runtime, RuntimeError},
+    /// # };
+    /// let mut rt = Runtime::new();
+    /// // ...
+    /// rt.evaluate("foo = _").unwrap();
+    /// match rt.evaluate("foo") {
+    ///     Err(RuntimeError::Eval(EvalError::UndefinedVariable(name))) => {
+    ///         assert_eq!(name, "foo")
+    ///     },
+    ///     _ => panic!("Expected undefined variable error"),
+    /// }
+    /// ```
     pub fn evaluate(&mut self, input: &str) -> Result<Value, RuntimeError> {
         let tree = Parser::new(input).parse()?;
         check_for_prohibited_behavior(&tree)?;
         Ok(tree.eval(&mut self.env)?)
     }
 
+    /// # Format a [`Value`] with configurable precision
+    ///
+    /// This function formats `value` using the value of the [precision
+    /// specifier variable][1] as the precision to pass to
+    /// [`value.format()`][2].
+    ///
+    /// The precision value must be an integer.
+    ///
+    /// ## Errors
+    ///
+    /// [`RuntimeError::NonIntegerPrecision`] is returned if the value of the
+    /// precision specifier variable is not an integer.
+    ///
+    /// [1]: Runtime::PRECISION_IDENT
+    /// [2]: crate::format::Formatter::format()
     pub fn format(&self, value: &Value) -> Result<String, RuntimeError> {
         match self.env.get(Self::PRECISION_IDENT) {
             Some(prec) => match prec {
@@ -115,7 +234,8 @@ fn create_base_units(env: &mut HashMap<String, Value>) {
 /// Check if an expression tree contains prohibited behavior.
 /// The list of prohibited behaviors currently includes:
 ///   - Assigning to the `_` variable
-///   - Assigning to any base unit
+///   - Assigning to any base quantity identifier
+// NOTE: also document prohibited behavior in Parser::evaluate().
 fn check_for_prohibited_behavior(tree: &Node) -> Result<(), RuntimeError> {
     match tree {
         Node::BinaryExpression(BinaryExpression {
@@ -151,17 +271,41 @@ impl Default for Runtime {
     }
 }
 
+/// # Runtime error
+///
+/// Represents an error that occurs within the Numbrs execution runtime. This
+/// encapsulates virtually every error that Numbrs can produce.
 #[derive(thiserror::Error, Debug)]
 pub enum RuntimeError {
+    /// ## Parse error
+    ///
+    /// Propagated from [`parser::ParseError`][1].
+    ///
+    /// [1]: ParseError
     #[error("Parse error: {0}")]
     Parse(#[from] ParseError),
 
+    /// ## Evaluation error
+    ///
+    /// Propagated from [`eval::EvalError`][2].
+    ///
+    /// [2]: EvalError
     #[error("Evaluation error: {0}")]
     Eval(#[from] EvalError),
 
+    /// ## Non-integer precision
+    ///
+    /// The value stored in the [precision specifier variable][1] is not an
+    /// integer and cannot be used to format a value.
+    ///
+    /// [1]: Runtime::PRECISION_IDENT
     #[error("Got non-integer precision specifier `{}`. Unable to format result.", .0.format(3))]
     NonIntegerPrecision(Box<Value>),
 
+    /// ## Assignment prohibited
+    ///
+    /// See [`Runtime::evaluate()`] for a list of what assignments are
+    /// prohibited.
     #[error("Can't assign special variable `{0}`")]
     AssignmentProhibited(String),
 }
