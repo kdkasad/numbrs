@@ -19,40 +19,48 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-// Disable warning about unary operator patterns being unreachable
-#![allow(unreachable_patterns)]
-
-use strum_macros::{Display, EnumString};
 use thiserror::Error;
 
-#[derive(Copy, Clone, Debug, EnumString, Display, PartialEq, Eq)]
-pub enum Operation {
-    #[strum(serialize = "+")]
-    Add,
-    #[strum(serialize = "-")]
-    Subtract,
+// We put Operation in its own module because the strum macros cause warnings
+// which cannot be disabled for just the Operation type since they occur within
+// the procedural macros. We have to allow the unreachable_patterns diagnostic
+// for the containing module, so we isolate it into its own module.
+mod inner {
+    // Disable warning about unary operator patterns being unreachable
+    #![allow(unreachable_patterns)]
 
-    #[strum(serialize = "*")]
-    Multiply,
-    #[strum(serialize = "/")]
-    Divide,
+    use strum_macros::{Display, EnumString};
 
-    #[strum(serialize = "^")]
-    Raise,
+    #[derive(Copy, Clone, Debug, EnumString, Display, PartialEq, Eq)]
+    pub enum Operation {
+        #[strum(serialize = "+")]
+        Add,
+        #[strum(serialize = "-")]
+        Subtract,
 
-    #[strum(serialize = "=")]
-    Assign,
-    #[strum(serialize = ":=")]
-    AssignUnit,
+        #[strum(serialize = "*")]
+        Multiply,
+        #[strum(serialize = "/")]
+        Divide,
 
-    #[strum(serialize = "+")]
-    UnaryAdd,
-    #[strum(serialize = "-")]
-    UnarySubtract,
+        #[strum(serialize = "^")]
+        Raise,
 
-    #[strum(serialize = "to")]
-    ConvertUnits,
+        #[strum(serialize = "=")]
+        Assign,
+        #[strum(serialize = ":=")]
+        AssignUnit,
+
+        #[strum(serialize = "+")]
+        UnaryAdd,
+        #[strum(serialize = "-")]
+        UnarySubtract,
+
+        #[strum(serialize = "to")]
+        ConvertUnits,
+    }
 }
+pub use inner::Operation;
 
 impl Operation {
     pub fn unary_try_from(opstr: &str) -> Result<Self, OperationError> {
