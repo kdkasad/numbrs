@@ -19,6 +19,8 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
+//! Mathematical operations
+
 use thiserror::Error;
 
 // We put Operation in its own module because the strum macros cause warnings
@@ -31,31 +33,65 @@ mod inner {
 
     use strum_macros::{Display, EnumString};
 
+    /// # Mathematical operation
+    ///
+    /// Represents an operation that is performed between two numbers or values.
     #[derive(Copy, Clone, Debug, EnumString, Display, PartialEq, Eq)]
     pub enum Operation {
+        /// ## Arithmetic addition
         #[strum(serialize = "+")]
         Add,
+
+        /// ## Artithmetic subtraction
         #[strum(serialize = "-")]
         Subtract,
 
+        /// ## Artithmetic multiplication
         #[strum(serialize = "*")]
         Multiply,
+
+        /// ## Artithmetic division
         #[strum(serialize = "/")]
         Divide,
 
+        /// ## Artithmetic exponentiation
+        ///
+        /// E.g. *A* to the power of *B*
         #[strum(serialize = "^")]
         Raise,
 
+        /// ## Variable assignment
+        ///
+        /// Assigns the RHS value to the identifier provided as the LHS
         #[strum(serialize = "=")]
         Assign,
+
+        /// ## Unit assignment
+        ///
+        /// Same as variable assignment, but makes the identifier a unit rather
+        /// than a plain number or quantity.
         #[strum(serialize = ":=")]
         AssignUnit,
 
+        /// ## Unary addition
+        ///
+        /// Same as [`Add`][`Self::Add`] but for one operand rather than two.
+        /// This really does nothing, as it just adds zero to the operand.
         #[strum(serialize = "+")]
         UnaryAdd,
+
+        /// ## Unary subtraction
+        ///
+        /// Same as [`Subtract`][`Self::Subtract`] but for one operand rather
+        /// than two. This subtracts the operand from zero, essentially negating
+        /// it.
         #[strum(serialize = "-")]
         UnarySubtract,
 
+        /// ## Convert units
+        ///
+        /// Convert the quantity or unit(s) on the LHS to the same value
+        /// represented in the unit(s) specified on the RHS.
         #[strum(serialize = "to")]
         ConvertUnits,
     }
@@ -63,6 +99,14 @@ mod inner {
 pub use inner::Operation;
 
 impl Operation {
+    /// Attempt to create a unary [`Operation`] variant from an operator string.
+    ///
+    /// Returns an [`Operation`] on success.
+    ///
+    /// ## Errors
+    ///
+    /// Returns an [`OperationError::InvalidOperatorString`] if the given
+    /// operator string does not map to a unary operation.
     pub fn unary_try_from(opstr: &str) -> Result<Self, OperationError> {
         use Operation::*;
         match opstr {
@@ -72,6 +116,8 @@ impl Operation {
         }
     }
 
+    /// Test whether this [`Operation`] is a binary operation, i.e. one which
+    /// accepts two operands.
     pub fn is_binary(self) -> bool {
         use Operation::*;
         match self {
@@ -80,6 +126,8 @@ impl Operation {
         }
     }
 
+    /// Test whether this [`Operation`] is a unary operation, i.e. one which
+    /// accepts one operand.
     pub fn is_unary(self) -> bool {
         !self.is_binary()
     }
@@ -110,8 +158,15 @@ impl Operation {
     }
 }
 
+/// # Operation error
+///
+/// Represents an error relating to usage of the [`Operation`] type.
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum OperationError {
+    /// # Invalid operator string
+    ///
+    /// Occurs when attempting to create an [`Operation`] variant with a string
+    /// that does not represent a valid operator.
     #[error("Invalid operator string: '{0}'")]
     InvalidOperatorString(String),
 }
