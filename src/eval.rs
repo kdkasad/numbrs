@@ -36,7 +36,7 @@ use crate::{
     unit::{self, Unit, Units},
 };
 
-trait Operable {
+pub trait Operable {
     fn binary_op(self, op: Operation, rhs: Value) -> Result<Value, EvalError>;
     fn unary_op(self, op: Operation) -> Result<Value, EvalError>;
 }
@@ -319,7 +319,7 @@ impl Operable for Units {
 }
 
 impl Variable {
-    fn eval(self, env: &HashMap<String, Value>) -> Result<Value, EvalError> {
+    pub fn eval(self, env: &HashMap<String, Value>) -> Result<Value, EvalError> {
         match env.get(self.name()) {
             Some(val) => Ok(val.clone()),
             None => match resolve_unit(self.name(), env) {
