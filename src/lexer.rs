@@ -21,10 +21,11 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 /*!
 
-Lexer for Numbrs.
-Transforms input strings into token streams.
+# Expression lexer
 
-# Examples
+Transforms expression strings into [`Token`] streams.
+
+## Examples
 
 ```
 use numbrs::{
@@ -52,26 +53,58 @@ use strum_macros::{Display, IntoStaticStr};
 
 use crate::operation::Operation;
 
+/// # Expression syntax token
+///
+/// Represents a single piece of an expression in text syntax.
 #[derive(Clone, Display, Debug, IntoStaticStr, PartialEq, Eq)]
 #[strum(serialize_all = "lowercase")]
 pub enum Token {
+    /// ## Operator token
+    ///
+    /// Represents an operator, like `+` or `*`.
     Operator(Operation),
+
+    /// ## Number token
+    ///
+    /// Represents a number literal, like `123` or `8.2`.
     Number(String),
 
+    /// ## Identifier token
+    ///
+    /// Represents an identifier, i.e. a variable/unit name, like `meter`.
     #[strum(serialize = "identifier")]
     Ident(String),
 
+    /// ## Begin group token
+    ///
+    /// Begins a group. This is usually the left paren, `(`.
     #[strum(serialize = "group open")]
     GroupBegin,
+
+    /// ## End group token
+    ///
+    /// Ends a group. This is usually the right paren, `)`.
     #[strum(serialize = "group close")]
     GroupEnd,
 
+    /// ## Illegal token
+    ///
+    /// Represents an unexpected token which is not supposed to exist where it
+    /// does.
     Illegal(char),
 }
 
-/// Input lexer. Processes input strings into token streams.
+/// # Expression lexer
 ///
-/// See [module-level][crate::lexer] documentation for examples.
+/// Processes input strings into [`Token`] streams.
+///
+/// This struct implements [`Iterator<Item = Token>`][2], so it can be used like
+/// any other iterator over [`Token`]s.
+///
+/// See [module-level documentation][1] for an example usage.
+///
+/// [1]: crate::lexer
+/// [2]: Iterator
 #[derive(Clone, Debug)]
 pub struct Lexer<'a> {
     chars: Peekable<Chars<'a>>,
@@ -151,12 +184,11 @@ impl Iterator for Lexer<'_> {
 /// # Example
 ///
 /// ```ignore
-/// use numbrs::lexer::collect_chars;
-///
+/// # use numbrs::lexer::collect_chars;
 /// let mut chars = "123 + 456".chars().collect::<Vec<_>>().into_iter().peekable();
-/// assert_eq!(collect_chars(&mut chars, |c| c.is_numeric()), "123".to_string());
-/// assert_eq!(collect_chars(&mut chars, |c| !c.is_numeric()), " + ".to_string());
-/// assert_eq!(collect_chars(&mut chars, |c| c.is_numeric()), "456".to_string());
+/// assert_eq!(&collect_chars(&mut chars, |c| c.is_numeric()),  "123");
+/// assert_eq!(&collect_chars(&mut chars, |c| !c.is_numeric()), " + ");
+/// assert_eq!(&collect_chars(&mut chars, |c| c.is_numeric()),  "456");
 /// ```
 fn collect_chars<F>(chars: &mut Peekable<Chars>, predicate: F) -> String
 where
