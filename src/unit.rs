@@ -19,23 +19,55 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-//! Unit handling for Numbrs.
+//! # Unit handling
+//!
+//! Units are named amounts of physical quantities that make it easier to work
+//! with physical quantities.
+//!
+//! ## What makes a [`Unit`]
 //!
 //! A unit has three parts:
-//!   1. A magnitude
-//!   2. An offset
-//!   3. A dimension
+//!   1. A name
+//!   2. An exponent
+//!   3. A scale
+//!   4. An offset
+//!   5. A dimension
 //!
-//! The magnitude of a unit is the ratio between the unit and the underlying
-//! base quantity.
+//! The *name* of a unit is a string which represents the unit in expressions.
 //!
-//! The offset of a unit is a constant offset from the underlying base quantity.
-//! For example, Celsius and Kelvin units have the same magnitude, but Celsius
-//! is offset by 273.15 from Kelvin.
+//! The *exponent* of a unit is the exponent a given unit has within a [unit
+//! list](#unit-lists). See the explanation of unit lists below for more
+//! details.
 //!
-//! The dimension of a unit defines the physical quantity that it represents. A
-//! Newton (a unit of force) would have the dimension `L * M * T^-2`, where `L`
-//! represents Length, `M` represents Mass, and `T` represents Time.
+//! The *scale* of a unit is the ratio between the unit and the underlying base
+//! quantity. This is also sometimes called the *magnitude*.
+//!
+//! The *offset* of a unit is a constant offset from the underlying base
+//! quantity. For example, Celsius and Kelvin units have the same magnitude, but
+//! Celsius is offset by 273.15 from Kelvin.
+//!
+//! The *dimension* of a unit defines the physical quantity that it represents.
+//! A Newton (a unit of force) would have the dimension `L * M * T^-2`, where
+//! `L` represents Length, `M` represents Mass, and `T` represents Time.
+//!
+//! ## Unit lists
+//!
+//! Quantities are often expressed as an amount of multiple units, not just one.
+//! For example, *60 km/hr* is a single quantity with two units, *km* and *hr*.
+//! Similarly, work can be specified in Newton-meters, e.g. *14 N m*, which is a
+//! single quantity with two units *N* and *m*.
+//!
+//! Each unit in a unit list is multiplied together.
+//!
+//! This concept of unit lists is implemented by the [`Units`] type. It is very
+//! similarly named to the [`Unit`] type, which is a little confusing. In nearly
+//! all cases, if you're specifying an amount of physical quantities, you want
+//! [`Units`] and not [`Unit`].
+//!
+//! The *exponent* component of each unit is especially useful for unit lists.
+//! The unit list *km/hr* (kilometers per hour) has two units, *km* and *hr*,
+//! with exponents *1* and *-1*, respectively. This prevents us from having to
+//! define a new unit equal to *hr^-1* in order to include it in the unit list.
 
 use std::{
     fmt,
@@ -48,29 +80,49 @@ use num::BigRational;
 
 use crate::{ast::Quantity, dimension::Dimension, eval::EvalError, rat_util_macros::rat};
 
-/// Unit of measurement.
+/// # Unit of measurement
 ///
-/// See [module documentation][1] for details.
+/// See the [module-level documentation][1] for details.
 ///
 /// [1]: crate::unit
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Unit {
+    /// Name of the [`Unit`]; a string which represents the unit in expressions
     pub name: String,
+
+    /// The *exponent* of a unit is the exponent a given unit has within a [unit
+    /// list][1]. See the [module-level documentation][1] for more explanation.
+    ///
+    /// [1]: crate::unit#unit-lists
     pub exponent: i32,
+
+    /// The ratio between the unit and the underlying base quantities it
+    /// represents. This is also sometimes called the *magnitude*.
     pub scale: BigRational,
+
+    /// The *offset* of a unit is a constant offset from the underlying base
+    /// quantity. For example, Celsius and Kelvin units have the same magnitude, but
+    /// Celsius is offset by 273.15 from Kelvin.
     pub offset: BigRational,
+
+    /// The *dimension* of a unit defines the physical quantity that it
+    /// represents. A Newton (a unit of force) would have the dimension `L * M *
+    /// T^-2`, where `L` represents Length, `M` represents Mass, and `T`
+    /// represents Time.
     pub dimension: Dimension,
 }
 
 impl Unit {
-    /// Test whether two units conform.
+    /// # Test whether two units conform.
     ///
-    /// This simply tests whether the dimensions of the two units are equal.
+    /// Units conform when their dimensions are equal, i.e. they represent the
+    /// same physical quantities. For example, *miles/hour* and *meters/second*
+    /// conform because they both represent distance (or length) over time.
     pub fn conforms_to(&self, other: &Self) -> bool {
         self.dimension == other.dimension
     }
 
-    /// Creates an new unit
+    /// # Create an new unit
     pub fn new(
         name: &str,
         exponent: i32,
@@ -98,7 +150,11 @@ impl Display for Unit {
     }
 }
 
-/// Wrapper type for a list of units
+/// # List of units
+///
+/// See the [module-level documentation][1] for details.
+///
+/// [1]: crate::unit
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Units(Vec<Unit>);
 
@@ -119,7 +175,7 @@ impl DerefMut for Units {
 }
 
 impl Units {
-    /// Calculate the dimension of a list of units.
+    /// # Calculate the dimension of a list of units.
     ///
     /// Raises each unit's dimension to its exponent, then multiplies the
     /// results together.
@@ -130,29 +186,39 @@ impl Units {
             .fold(Dimension::new(), |sum, item| sum * item)
     }
 
-    /// Test if a unit list conforms to another unit list.
+    /// # Test if a unit list conforms to another unit list.
     ///
-    /// See [Unit::conforms_to] for what conformity means.
+    /// See [`Unit::conforms_to()`] for the meaning of conformity.
     pub fn conforms_to(&self, other: &Self) -> bool {
         self.dimension() == other.dimension()
     }
 
-    /// Creates a new empty unit list
+    /// # Create a new empty unit list
     pub const fn new() -> Self {
         Self(Vec::new())
     }
 
-    /// Tests whether a list of units is dimensionless
+    /// # Tests if a list of units is dimensionless
+    ///
+    /// A unit list is dimensionless if it has a [pure dimension][1].
+    ///
+    /// [1]: Dimension::is_pure()
     pub fn is_dimensionless(&self) -> bool {
         self.dimension().is_pure()
     }
 
-    /// Raise the unit list to an integer power
+    /// # Raise the unit list to an integer power
     pub fn pow_assign(&mut self, exp: i32) {
         self.0.iter_mut().for_each(|mut unit| unit.exponent *= exp);
     }
 
-    /// Multiply a [BigRational] times the combined scales of the units
+    /// # Scale `n` by the unit list's scale
+    ///
+    /// Multiply `n` times the combined scales of the units. This gets the
+    /// quantity `n` in terms of base physical quantity amounts.
+    ///
+    /// For example, if the unit list `cheese` has a scale of 15, then
+    /// `cheese.scale(rat!(3))` would return `45`.
     pub fn scale(&self, n: &BigRational) -> BigRational {
         if self.0.is_empty() {
             return n.clone();
@@ -171,7 +237,7 @@ impl Units {
         result
     }
 
-    /// Inverse of the [`Self::scale()`] function.
+    /// # Inverse of the [`scale()`] function.
     pub fn descale(&self, n: &BigRational) -> BigRational {
         if self.0.is_empty() {
             return n.clone();
@@ -190,6 +256,10 @@ impl Units {
         result
     }
 
+    /// # Get the combined scale of the unit list.
+    ///
+    /// Raises the scale of each unit to that unit's exponent, then multiplies
+    /// all of the results together.
     pub fn aggregate_scales(&self) -> BigRational {
         let mut result = rat!(1);
         for unit in &self.0 {
@@ -198,7 +268,10 @@ impl Units {
         result
     }
 
-    /// Create a new [Unit] identical to this [Units] list.
+    /// # Create a new unit from this unit list.
+    ///
+    /// Creates a new [`Unit`] named `name` which has an identical scale and
+    /// dimension to this [`Units`] list.
     pub fn collapse_to(&self, name: &str) -> Unit {
         Unit::new(name, 1, self.aggregate_scales(), rat!(0), self.dimension())
     }
