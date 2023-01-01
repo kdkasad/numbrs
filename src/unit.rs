@@ -55,11 +55,11 @@ use crate::{ast::Quantity, dimension::Dimension, eval::EvalError, rat_util_macro
 /// [1]: crate::unit
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Unit {
-    pub(crate) name: String,
-    pub(crate) exponent: i32,
-    pub(crate) scale: BigRational,
-    pub(crate) offset: BigRational,
-    pub(crate) dimension: Dimension,
+    pub name: String,
+    pub exponent: i32,
+    pub scale: BigRational,
+    pub offset: BigRational,
+    pub dimension: Dimension,
 }
 
 impl Unit {
@@ -85,11 +85,6 @@ impl Unit {
             offset,
             dimension,
         }
-    }
-
-    /// Get the dimension of a unit
-    pub fn dimension(&self) -> Dimension {
-        self.dimension
     }
 }
 
@@ -128,7 +123,7 @@ impl Units {
     ///
     /// Raises each unit's dimension to its exponent, then multiplies the
     /// results together.
-    pub(crate) fn dimension(&self) -> Dimension {
+    pub fn dimension(&self) -> Dimension {
         self.0
             .iter()
             .map(|unit| unit.dimension.pow(unit.exponent))
