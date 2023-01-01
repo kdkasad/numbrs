@@ -19,17 +19,33 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-//! Formatting functions for [Value] struct and sub-types
+//! # Formatting functions for values
+//!
+//! This module provides functions for formatting values and numbers with a
+//! given *precision*. The precision specifies where the value will be rounded
+//! or extended to.
 
 use num::{BigRational, ToPrimitive};
 
 use crate::ast::{Quantity, Value};
 
+/// Types which can be formatted with a custom precision.
 pub trait Formatter {
+    /// # Format a value with a given precision.
+    ///
+    /// The `precision` can be any integer. Positive integers will cause decimal
+    /// values to be rounded to `precision` digits to the right of the decimal
+    /// point. Negative integers will cause decimal values to be rounded to
+    /// `-precision` places to the left of the decimal point. For example,
+    /// rounding *1234.56* with a precision of *-2* would yield *1200*.
+    ///
+    /// A `precision` of zero means the integer part of the value is output.
     fn format(&self, precision: isize) -> String;
 }
 
 impl Formatter for f64 {
+    /// Note: this formatter will round values rather than truncating them.
+    /// Half-way cases are rounded away from zero, as in [`f64::round()`].
     fn format(&self, precision: isize) -> String {
         if precision >= 0 {
             format!("{:.*}", precision as usize, self)
