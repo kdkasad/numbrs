@@ -19,7 +19,12 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-//! Evaluation of [AST nodes][Node] for Numbrs
+//! # Evaluation of expression trees
+//!
+//! This module handles evaluation of [`Node`]s.
+//!
+//! The module doesn't export any functions for evaluating nodes, but it
+//! contains the implementation of the [`Node::eval()`] function.
 
 use std::{collections::HashMap, ops::Neg};
 
@@ -36,8 +41,21 @@ use crate::{
     unit::{self, Unit, Units},
 };
 
+/// # Types which can be operands for [`Operation`]s.
 pub trait Operable {
+    /// Perform a binary operation between this operand and an RHS [`Value`].
+    ///
+    /// This operand (`self`) will be the LHS and `rhs` is the RHS.
+    /// `op` is the [`Operation`] to be performed.
+    ///
+    /// Returns a [`Value`] on success and an [`EvalError`] otherwise.
     fn binary_op(self, op: Operation, rhs: Value) -> Result<Value, EvalError>;
+
+    /// Perform a unary operation on this operand.
+    ///
+    /// `op` is the [`Operation`] to be performed.
+    ///
+    /// Returns a [`Value`] on success and an [`EvalError`] otherwise.
     fn unary_op(self, op: Operation) -> Result<Value, EvalError>;
 }
 
@@ -319,6 +337,12 @@ impl Operable for Units {
 }
 
 impl Variable {
+    /// Evaluate this [`Variable`] in the environment `env`.
+    ///
+    /// This function will look up the variable name as-is first, then will try
+    /// resolving with unit prefixes and suffixes (see the [`affixes` module][1]).
+    ///
+    /// [1]: crate::affixes
     pub fn eval(self, env: &HashMap<String, Value>) -> Result<Value, EvalError> {
         match env.get(self.name()) {
             Some(val) => Ok(val.clone()),
@@ -348,7 +372,19 @@ fn bigrational_pow(lhs: BigRational, rhs: BigRational) -> Result<BigRational, Ev
 }
 
 impl Node {
-    /// Evaluate this node.
+    /// Evaluate this [`Node`].
+    ///
+    /// Returns a [`Result`] containing a [`Value`] on success and an
+    /// [`EvalError`] on failure.
+    ///
+    /// `env` is a map which holds the values of variables. A variable is looked
+    /// up in the map by its name and is replaced with the corresponding
+    /// [`Value`]. If the name is not present in the map, an
+    /// [`EvalError::UndefinedVariable`] error is returned.
+    ///
+    /// When the expression being evaluated contains a variable or unit
+    /// assignment, the new variable is stored in the map, which is why a
+    /// mutable reference to `env` is required.
     ///
     /// # Examples
     ///
@@ -359,20 +395,20 @@ impl Node {
     /// #     operation::Operation,
     /// # };
     /// # use std::collections::HashMap;
-    /// # macro_rules! rat {
+    /// # macro_rules! bigrational {
     /// #     ( $a:expr ) => {
     /// #         ::num::BigRational::from_integer(::num::BigInt::from($a))
     /// #     };
     /// # }
     /// let tree = Node::from(BinaryExpression::new(
     ///     Operation::Multiply,
-    ///     Node::from(rat!(2)),
-    ///     Node::from(rat!(3))
+    ///     Node::from(bigrational!(2)),
+    ///     Node::from(bigrational!(3))
     /// ));
     /// let mut env = HashMap::new();
     /// match tree.eval(&mut env).unwrap() {
     ///     Value::Number(val) => {
-    ///         assert_eq!(val, rat!(6))
+    ///         assert_eq!(val, bigrational!(6))
     ///     }
     ///     _ => unreachable!(),
     /// }
@@ -461,26 +497,86 @@ fn handle_assignment(
     Ok(rval)
 }
 
+/// # Evaluation error
+///
+/// Represents an error that occurred during evaluation of an expression tree.
 #[derive(Error, Debug)]
 pub enum EvalError {
+    /// ## Invalid binary operation for the given operands
+    ///
+    /// Occurs when a [`BinaryExpression`] is evaluated with an invalid
+    /// operation for the given LHS and RHS types. For example,
+    /// [`Operation::Add`] on [`Node::Quantity`] and [`Node::Number`] will
+    /// return this error.
+    ///
+    /// This variant stores the [boxed][1] LHS operand [`Value`], [boxed][1] RHS
+    /// operand [`Value`], and the given [`Operation`] in its tuple fields, in
+    /// that order.
+    ///
+    /// [1]: Box
     #[error("Invalid operation `{2}` for types {0} and {1}")]
     InvalidBinaryOperation(Box<Value>, Box<Value>, Operation),
 
+    /// ## Conversion between non-conforming units
+    ///
+    /// Trying to convert, for example, *meters* to *kilograms* will return this
+    /// error. Adding or subtracting quantities with non-conforming units also
+    /// raises this error.
+    ///
+    /// See [`Unit::conforms_to()`] for an explanation of conformity.
+    ///
+    /// This variant stores the ([boxed][Box]) LHS and RHS units in its tuple
+    /// fields, in that order.
     #[error("Cannot convert between units that describe different quantities: `{0}` and `{1}`")]
     ConvertNonConformingUnits(Box<Units>, Box<Units>),
 
+    /// ## Expected a different operation
+    ///
+    /// This error occurs when a unary operation (like [`Operation::UnaryAdd`])
+    /// is specified for a [`BinaryExpression`], or vice versa.
+    ///
+    /// This variant stores a string describing the expected operation type, a
+    /// string describing the given operation type, and the given [`Operation`]
+    /// in its tuple fields, in that order.
     #[error("Expected {0} operation, found {1} operation `{2}`")]
     ExpectedOperation(&'static str, &'static str, Operation),
 
+    /// ## Undefined variable
+    ///
+    /// A [`Variable`] was evaluated that did not have a matching entry in the
+    /// provided environment map.
+    ///
+    /// This variant stores the name of the undefined variable as its tuple field.
     #[error("`{0}` not defined")]
     UndefinedVariable(String),
 
+    /// # Non-integer exponent
+    ///
+    /// A [`BinaryExpression`] with [`Operation::Raise`] was evaluated with an
+    /// RHS that was not an integer.
+    ///
+    /// Numbrs only supports integer exponents, so something like `10 ^ 1.5`
+    /// will cause this error to be returned.
+    ///
+    /// This variant stores the ([boxed][Box]) RHS [`Value`] as its tuple field.
     #[error("Only integer number exponents are supported, not `{0}`")]
     NonIntegerExponent(Box<Value>),
 
+    /// # Invalid left-hand-side for operation expression
+    ///
+    /// This error is returned when an assignment expression has an LHS value
+    /// that is not a [`Variable`]. Only identifiers (which get parsed as a
+    /// [`Variable`]) are allowed in the LHS of an assignment.
     #[error("Invalid LHS for assignment operation")]
     InvalidAssignmentLHS,
 
+    /// # Invalid unary operation for the given operand
+    ///
+    /// This error is returned when a [`UnaryExpression`] is evaluated that has
+    /// an operand that does not support the given [`Operation`].
+    ///
+    /// This variant stores the ([boxed][Box]) operand [`Value`] and the invalid
+    /// [`Operation`] in its tuple fields.
     #[error("Invalid unary operation `{1}` for type `{0}`")]
     InvalidUnaryOperation(Box<Value>, Operation),
 }
