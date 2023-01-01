@@ -47,8 +47,8 @@ pub struct Runtime {
 }
 
 impl Runtime {
-    const DEFAULT_PRECISION: isize = 5;
-    const PRECISION_IDENT: &'static str = "_prec";
+    pub const DEFAULT_PRECISION: isize = 5;
+    pub const PRECISION_IDENT: &'static str = "_prec";
     pub const UNASSIGN_IDENT: &'static str = "_";
 
     pub fn new() -> Self {
