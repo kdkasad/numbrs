@@ -23,7 +23,7 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 //! Helper macros for creating [BigRational][br] structs
 //!
-//! [br]: num_rational::BigRational
+//! [br]: ::num::BigRational
 
 /// Create a [BigRational] from integer(s).
 ///
