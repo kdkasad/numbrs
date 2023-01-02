@@ -73,8 +73,13 @@ use crate::{operation::Operation, rat_util_macros::rat, unit::Units};
 /// than *1*.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Quantity {
-    pub(crate) mag: BigRational,
-    pub(crate) units: Units,
+    /// Magnitude of the quantity, i.e. the amount of the specified units.
+    ///
+    /// For example, the quantity *5 meters* has a magnitude of *5*.
+    pub mag: BigRational,
+
+    /// Units that the quantity is expressed in
+    pub units: Units,
 }
 
 impl Quantity {
