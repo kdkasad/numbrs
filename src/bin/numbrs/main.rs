@@ -22,10 +22,13 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 mod completion;
 
-use numbrs::runtime::Runtime;
-use rustyline::{error::ReadlineError, Editor};
+use std::{cell::RefCell, rc::Rc};
+
+use numbrs::{affixes::standard_prefixes, runtime::Runtime};
+use rustyline::{error::ReadlineError, CompletionType, Editor};
 
 use self::textio::*;
+use crate::completion::IdentCompleter;
 
 macro_rules! message {
     ($name:literal) => {
@@ -44,8 +47,10 @@ mod textio {
 }
 
 fn main() {
-    // TODO: add completion helper
-    let mut rl = match Editor::<()>::new() {
+    let editor_config = rustyline::Config::builder()
+        .completion_type(CompletionType::List)
+        .build();
+    let mut rl = match Editor::with_config(editor_config) {
         Ok(editor) => editor,
         Err(err) => {
             eprintln!(
@@ -55,6 +60,7 @@ fn main() {
             return;
         }
     };
+
     let mut rt = Runtime::new();
     if let Err(err) = rt.load_defaults() {
         eprintln!(
@@ -63,6 +69,13 @@ fn main() {
         );
         return;
     }
+    let shared_rt = Rc::new(RefCell::new(rt));
+
+    // Create and register completion helper
+    rl.set_helper(Some(IdentCompleter::new(
+        Rc::clone(&shared_rt),
+        standard_prefixes(),
+    )));
 
     // Print startup message
     // TODO: only print when connected to terminal
@@ -87,8 +100,9 @@ fn main() {
                     continue;
                 }
 
-                match rt.evaluate(&line) {
-                    Ok(value) => match rt.format(&value) {
+                let value = shared_rt.borrow_mut().evaluate(&line);
+                match value {
+                    Ok(value) => match shared_rt.borrow().format(&value) {
                         Ok(output) => println!("{}", output),
                         Err(err) => eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, err),
                     },
