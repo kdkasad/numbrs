@@ -20,8 +20,8 @@
 # TODO: Add Imperial units
 
 # Numerical constants
-pi := 3.141592653589793238
-e := 2.71828182845904523536
+pi = 3.141592653589793238
+e = 2.71828182845904523536
 
 m := LENGTH
 meter := m
@@ -122,7 +122,7 @@ liter := 1000 cc
 L     := liter
 
 # Physical constants
-c := 299792458 m/s
+c = 299792458 m/s
 #elementarycharge :=    1.602176634e-19 C
 #electroncharge :=      - elementarycharge
 #protoncharge :=        + elementarycharge
