@@ -66,7 +66,6 @@ impl Formatter for f64 {
 }
 
 impl Formatter for BigRational {
-    // TODO: support negative precision, i.e. rounding to whole places
     fn format(&self, precision: isize) -> String {
         if !self.is_integer() || precision != 0 {
             match self.to_f64() {
