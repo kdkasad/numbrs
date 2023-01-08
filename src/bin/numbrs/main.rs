@@ -20,6 +20,8 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
+mod completion;
+
 use numbrs::runtime::Runtime;
 use rustyline::{error::ReadlineError, Editor};
 
