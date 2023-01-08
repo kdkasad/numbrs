@@ -135,7 +135,7 @@ where
                 Token::Illegal(c) => return Err(ParseError::IllegalToken(c)),
             };
 
-            let (l_bp, r_bp) = infix_binding_power(op, implicit);
+            let (l_bp, r_bp) = infix_binding_power(op);
             if l_bp < min_bp {
                 break;
             }
@@ -168,9 +168,9 @@ fn str_to_num(src: &str) -> Result<BigRational, ParseError> {
     }
 }
 
-fn infix_binding_power(op: Operation, implicit: bool) -> (u32, u32) {
+fn infix_binding_power(op: Operation) -> (u32, u32) {
     use Operation::*;
-    let mut result = match op {
+    match op {
         Assign | AssignUnit => (105, 10),
         Add | Subtract => (30, 35),
         ConvertUnits => (40, 45),
@@ -179,15 +179,7 @@ fn infix_binding_power(op: Operation, implicit: bool) -> (u32, u32) {
         UnaryAdd | UnarySubtract => {
             panic!("Expected (binary) infix operator, got unary operator")
         }
-    };
-
-    // Prioritize implicit operations over their explicit counterparts
-    if implicit {
-        result.0 += 2;
-        result.1 += 2;
     }
-
-    result
 }
 
 fn prefix_binding_power(op: Operation) -> ((), u32) {
@@ -301,11 +293,16 @@ mod tests {
             (".0125", subexpr!(0.0125)),
             ("180.", subexpr!(180)),
             // TODO: add tests for units
+            ("1/360 circle", binexpr!("*" ("/" 1 360) circle)),
         ];
 
         for (input, expected_result) in cases {
-            println!("Testing expression: '{}'", input);
-            assert_eq!(Parser::new(input).parse().unwrap(), expected_result);
+            assert_eq!(
+                Parser::new(input).parse().unwrap(),
+                expected_result,
+                "Testing expression: '{}'",
+                input
+            );
         }
     }
 

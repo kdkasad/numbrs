@@ -82,7 +82,7 @@ Example:
 | `to`      | Convert units\*\*             | 4             | Left          |
 | `+`       | Add                           | 3             | Left          |
 | `-`       | Subtract                      | 3             | Left          |
-| `*`       | Multiply                      | 5\*\*\*       | Left          |
+| `*`       | Multiply                      | 5             | Left          |
 | `/`       | Divide                        | 5             | Left          |
 | `^`       | Exponentiate (raise to power) | 6             | Right         |
 
@@ -96,9 +96,6 @@ side and 1 on the right side. This means `a + b = c + d` is equivalent to `a *
 
 \*\* The `to` operator is discussed in more detail in the
 [Converting Units section](#converting-units).
-
-\*\*\* See the [Implicit Operations](#implicit-operations) section below for
-details on the binding power of implicit multiplication.
 
 #### Unary (prefix) operators
 
@@ -137,11 +134,6 @@ operator in between, multiplication is implied. This means you can simply write
 The same applies for two units or variables, so a Newton can be represented as
 `kg m/s^2` rather than `kg * m/s^2`. The expression `2 3` is also interpreted as
 `2 * 3`, but that is disgusting syntax and should not be used.
-
-Implicit multiplication is the most sensible way to express quantities, e.g.
-amounts of units, so implicit multiplication is given higher binding power than
-explicit multiplication and division. This means that `1 m / 2 s` is treated as
-`(1 m) / (2 s)` and not as `((1 m) / 2) s)`.
 
 ### Variables
 
