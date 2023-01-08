@@ -75,17 +75,8 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
-      - name: Restore cached Cargo files
-        uses: actions/cache@v3
-        with:
-          path: |
-            target
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: ${{ matrix.os }}-cargo-${{ matrix.target }}-${{ hashFiles('Cargo.lock') }}
-          restore-keys: |
-            ${{ matrix.os }}-cargo-${{ matrix.target }}-
-            ${{ matrix.os }}-cargo-
+      - name: Cache build artifacts
+        uses: Swatinem/rust-cache@v2
 
       - name: Compile
         if: ${{ matrix.use-cross != true }}
