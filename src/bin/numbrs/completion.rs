@@ -51,13 +51,13 @@ impl<'a> Completer for IdentCompleter<'a> {
                     .map(|(name, value)| create_pair_from_value(name, value)),
             );
 
-            // Add all standalone prefixes
-            matches.extend(
-                self.prefixes
-                    .iter()
-                    .filter(|&prefix| prefix.standalone())
-                    .map(|prefix| create_pair_from_prefix(prefix.text())),
-            );
+            // Add all prefixes
+            for prefix in self.prefixes {
+                matches.push(create_pair(prefix.text(), "prefix"));
+                if prefix.standalone() {
+                    matches.push(create_pair(prefix.text(), "value"));
+                }
+            }
         } else {
             // Cursor in partial identifier
             let part = &line[word_start..pos];
@@ -72,14 +72,15 @@ impl<'a> Completer for IdentCompleter<'a> {
                     .map(|(name, value)| create_pair_from_value(name, value)),
             );
 
-            // Add all directly-matching standalone prefixes
-            matches.extend(
-                self.prefixes
-                    .iter()
-                    .filter(|prefix| prefix.standalone())
-                    .filter(|prefix| prefix.text().starts_with(part))
-                    .map(|prefix| create_pair_from_prefix(prefix.text())),
-            );
+            // Add all directly-matching prefixes
+            for prefix in self.prefixes {
+                if prefix.text().starts_with(part) {
+                    matches.push(create_pair(prefix.text(), "prefix"));
+                    if prefix.standalone() {
+                        matches.push(create_pair(prefix.text(), "value"));
+                    }
+                }
+            }
 
             // Try to look up with prefix removal
             for prefix in self.prefixes {
@@ -118,10 +119,10 @@ impl Hinter for IdentCompleter<'_> {
 impl Validator for IdentCompleter<'_> {}
 impl Helper for IdentCompleter<'_> {}
 
-fn create_pair_from_prefix(name: &str) -> Pair {
+fn create_pair(name: &str, kind: &'static str) -> Pair {
     Pair {
         replacement: name.to_owned(),
-        display: format!("{} (prefix)", name),
+        display: format!("{} ({})", name, kind),
     }
 }
 
