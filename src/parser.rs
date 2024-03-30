@@ -289,6 +289,7 @@ mod tests {
             ("foo = 1 + 2^3", binexpr!("=" foo ("+" 1 ("^" 2 3)))),
             ("a = b = c", binexpr!("=" a ("=" b c))),
             ("1 + a = 2 + 3", binexpr!("+" 1 ("=" a ("+" 2 3)))),
+            ("a * b = c + d", binexpr!("*" a ("=" b ("+" c d)))),
             ("1.5", subexpr!(1.5)),
             (".0125", subexpr!(0.0125)),
             ("180.", subexpr!(180)),
