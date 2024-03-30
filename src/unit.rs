@@ -209,7 +209,7 @@ impl Units {
 
     /// # Raise the unit list to an integer power
     pub fn pow_assign(&mut self, exp: i32) {
-        self.0.iter_mut().for_each(|mut unit| unit.exponent *= exp);
+        self.0.iter_mut().for_each(|unit| unit.exponent *= exp);
     }
 
     /// # Scale `n` by the unit list's scale

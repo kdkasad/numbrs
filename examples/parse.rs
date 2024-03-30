@@ -36,7 +36,7 @@ fn main() {
                 parse(&line);
             }
             Err(ReadlineError::Eof) => break,
-            Err(err) => Err(err).unwrap(),
+            Err(err) => panic!("{:?}", err),
         }
     }
 }
