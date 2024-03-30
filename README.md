@@ -57,7 +57,7 @@ Numbrs supports many operators which are used to perform operations on numbers.
 
 #### Grouping
 
-Parentheses, braces, and brackets (`()`, `[]`, and `{}`, respectively) are supported for grouping expressions.  
+Parentheses, braces, and brackets (`()`, `[]`, and `{}`, respectively) are supported for grouping expressions.
 Example:
 
     $ numbrs
@@ -70,7 +70,7 @@ Example:
 
 #### Binary operators
 
-Binary operators accept 2 operands using infix notation.  
+Binary operators accept 2 operands using infix notation.
 Example:
 
     $ numbrs
@@ -89,19 +89,19 @@ Example:
 | `^`       | Exponentiate (raise to power) | 6             | Right         |
 
 Operators with higher binding power will be executed first. Operator binding power in
-Numbrs follows standard mathematical order of operations when possible.  
+Numbrs follows standard mathematical order of operations when possible.
 For example, `1 + 2 * 3 + 4` is equivalent to `(1 + (2 * 3)) + 4`.
 
-\* The assignment operators are special: they have a priority of 10 on the left
-side and 1 on the right side. This means `a + b = c + d` is equivalent to `a *
-(b = (c + d))`.
+\* The assignment operators are special: they have a binding power of 10 on the
+left side and 1 on the right side. This means `a * b = c + d` is equivalent to
+`a * (b = (c + d))`.
 
 \*\* The `to` operator is discussed in more detail in the
 [Converting Units section](#converting-units).
 
 #### Unary (prefix) operators
 
-Unary operators support one operand and are specified in prefix notation.  
+Unary operators support one operand and are specified in prefix notation.
 Example:
 
     $ numbrs
@@ -161,7 +161,7 @@ special behaviors.
 ##### Underscore (`_`)
 The underscore variable has a numerical value of 0, but it can be used
 to unassign/clear variables. When assigned to an existing variable, that
-variable will be removed from the environment.  
+variable will be removed from the environment.
 Example:
 
     $ numbrs
