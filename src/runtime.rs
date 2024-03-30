@@ -85,7 +85,7 @@ use crate::{
 #[derive(Debug)]
 pub struct Runtime {
     /// Environment map.
-    /// 
+    ///
     /// Contains the defined variables and units for this [`Runtime`].
     pub env: HashMap<String, Value>,
 }
