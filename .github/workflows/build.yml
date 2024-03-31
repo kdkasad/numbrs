@@ -80,7 +80,7 @@ jobs:
 
       - name: Compile
         if: ${{ matrix.use-cross != true }}
-        run: cargo build --target ${{ matrix.target }} --all-features --release --locked
+        run: cargo build --target ${{ matrix.target }} --release --locked
 
       - name: Install cross
         if: ${{ matrix.use-cross == true }}
@@ -88,7 +88,7 @@ jobs:
 
       - name: Compile (using cross)
         if: ${{ matrix.use-cross == true }}
-        run: cross build --target ${{ matrix.target }} --all-features --release --locked
+        run: cross build --target ${{ matrix.target }} --release --locked
 
       - name: Create archive (Windows)
         if: ${{ contains(matrix.os, 'windows') }}
