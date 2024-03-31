@@ -35,6 +35,7 @@ use crate::{
     affixes::{resolve_unit, try_get_prefix_scale},
     ast::*,
     dimension::Dimension,
+    functions::Function,
     operation::Operation,
     rat_util_macros::rat,
     runtime::Runtime,
@@ -453,6 +454,32 @@ impl Node {
 
             Node::Number(num) => Ok(num.into()),
             Node::Quantity(q) => Ok(q.into()),
+            Node::FunctionCall(node) => {
+                let mut args: Vec<BigRational> = Vec::with_capacity(node.args.len());
+                for arg in node.args {
+                    let val = arg.eval(env)?;
+                    match val {
+                        Value::Quantity(quantity) => {
+                            if quantity.is_value() {
+                                let num = quantity.units.scale(&quantity.mag);
+                                args.push(num);
+                            } else {
+                                return Err(EvalError::NonPureValue(quantity.into()));
+                            }
+                        }
+                        Value::Unit(units) => {
+                            if units.is_dimensionless() {
+                                let num = units.scale(&rat!(1));
+                                args.push(num);
+                            } else {
+                                return Err(EvalError::NonPureValue(units.into()));
+                            }
+                        }
+                        Value::Number(num) => args.push(num),
+                    }
+                }
+                node.function.eval(args)
+            }
         }
     }
 }
@@ -579,6 +606,30 @@ pub enum EvalError {
     /// [`Operation`] in its tuple fields.
     #[error("Invalid unary operation `{1}` for type `{0}`")]
     InvalidUnaryOperation(Box<Value>, Operation),
+
+    /// # Wrong number of function arguments
+    ///
+    /// This error occurs when a function is called with the wrong number of
+    /// arguments.
+    ///
+    /// The tuple fields of this error are:
+    ///  1. The function that was called
+    ///  2. The number of arguments expected
+    ///  3. The number of arguments given
+    #[error("Function `{0}` expects {1} arguments, got {2}")]
+    InvalidFunctionArguments(Function, usize, usize),
+
+    /// # Non-pure value used in a context where a pure value is required
+    ///
+    /// The invalid value is stored in the tuple field.
+    #[error("Non-pure value `{0}` used in a context where a pure value is required")]
+    NonPureValue(Value),
+
+    /// # Overflow occurred during evaluation
+    ///
+    /// This should only be returned by [`Function`] calls.
+    #[error("Number `{0}` too large. Overflow occurred.")]
+    Overflow(BigRational),
 }
 
 #[cfg(test)]

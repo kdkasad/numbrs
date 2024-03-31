@@ -24,7 +24,11 @@ mod completion;
 
 use std::{cell::RefCell, rc::Rc};
 
-use numbrs::{affixes::standard_prefixes, ast::Value, runtime::{Runtime, RuntimeError}};
+use numbrs::{
+    affixes::standard_prefixes,
+    ast::Value,
+    runtime::{Runtime, RuntimeError},
+};
 use rustyline::{error::ReadlineError, CompletionType, Editor};
 
 use self::textio::*;
