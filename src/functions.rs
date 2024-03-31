@@ -49,6 +49,18 @@ pub enum Function {
     /// Returns the distance of the argument from zero.
     #[strum(serialize = "abs")]
     AbsoluteValue,
+
+    /// # Square root function
+    ///
+    /// Expects 1 argument.
+    #[strum(serialize = "sqrt")]
+    SquareRoot,
+
+    /// # Natural logarithm function
+    ///
+    /// Expects 1 argument.
+    #[strum(serialize = "ln")]
+    NaturalLogarithm,
 }
 
 impl Function {
@@ -56,7 +68,7 @@ impl Function {
     fn number_of_args(&self) -> usize {
         use Function::*;
         match self {
-            Sine | Cosine | AbsoluteValue => 1,
+            Sine | Cosine | AbsoluteValue | SquareRoot | NaturalLogarithm => 1,
         }
     }
 
@@ -81,6 +93,8 @@ impl Function {
             Sine => sin(arg)?,
             Cosine => cos(arg)?,
             AbsoluteValue => abs(arg),
+            SquareRoot => sqrt(arg)?,
+            NaturalLogarithm => ln(arg)?,
         }
         .into())
     }
@@ -114,4 +128,30 @@ fn cos(arg: BigRational) -> Result<BigRational, EvalError> {
 
 fn abs(arg: BigRational) -> BigRational {
     arg.abs()
+}
+
+fn ln(arg: BigRational) -> Result<BigRational, EvalError> {
+    match arg.to_f64() {
+        Some(float) => {
+            let result = float.ln();
+            match BigRational::from_f64(result) {
+                Some(rat) => Ok(rat),
+                None => Err(EvalError::Overflow(arg)),
+            }
+        }
+        None => Err(EvalError::Overflow(arg)),
+    }
+}
+
+fn sqrt(arg: BigRational) -> Result<BigRational, EvalError> {
+    match arg.to_f64() {
+        Some(float) => {
+            let result = float.sqrt();
+            match BigRational::from_f64(result) {
+                Some(rat) => Ok(rat),
+                None => Err(EvalError::Overflow(arg)),
+            }
+        }
+        None => Err(EvalError::Overflow(arg)),
+    }
 }

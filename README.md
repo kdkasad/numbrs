@@ -209,8 +209,8 @@ decimal point contain zeros.
 
 ### Functions
 
-Numbrs supoprt some built-in functions.
-Functions are called by preceding a group (e.g. parentheses) with the function name.
+Numbrs supoprt some built-in functions. Functions are called by preceding a
+group (e.g. parentheses) with the function identifier.
 
 Example:
 
@@ -222,11 +222,13 @@ Example:
 
 Currently, the following functions are supported:
 
-| Function       | Idenfifier  | Number of arguments |
-| ---            | ---         | ---                 |
-| Sine           | `sin`       | 1                   |
-| Cosine         | `cos`       | 1                   |
-| Absolute value | `abs`       | 1                   |
+| Function             | Idenfifier  | Number of arguments |
+| ---                  | ---         | ---                 |
+| Sine                 | `sin`       | 1                   |
+| Cosine               | `cos`       | 1                   |
+| Absolute value       | `abs`       | 1                   |
+| Square root          | `sqrt`      | 1                   |
+| Natural logarithm    | `ln`        | 1                   |
 
 ### Units
 
