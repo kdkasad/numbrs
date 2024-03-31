@@ -207,6 +207,27 @@ The positive value *N* will round to *N* places to the right of the decimal
 point. The negative value *-N* will round so that *N* places to the left of the
 decimal point contain zeros.
 
+### Functions
+
+Numbrs supoprt some built-in functions.
+Functions are called by preceding a group (e.g. parentheses) with the function name.
+
+Example:
+
+    $ numbrs
+    > sin(0)
+    0
+    > cos(180 degrees)
+    -1.00000
+
+Currently, the following functions are supported:
+
+| Function       | Idenfifier  | Number of arguments |
+| ---            | ---         | ---                 |
+| Sine           | `sin`       | 1                   |
+| Cosine         | `cos`       | 1                   |
+| Absolute value | `abs`       | 1                   |
+
 ### Units
 
 Numbrs supports processing amounts of physical quantities, commonly known as
