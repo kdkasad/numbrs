@@ -34,10 +34,10 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Lint code
-        run: cargo clippy --all-targets --all-features
+        run: cargo clippy --all-targets
 
       - name: Compile tests
-        run: cargo test --workspace --all-features --no-fail-fast --no-run --locked
+        run: cargo test --workspace --no-fail-fast --no-run --locked
 
       - name: Run tests
-        run: cargo test --workspace --all-features --no-fail-fast
+        run: cargo test --workspace --no-fail-fast

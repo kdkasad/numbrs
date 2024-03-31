@@ -66,11 +66,14 @@ impl<'a> Parser<Lexer<'a>> {
     }
 }
 
-impl<'a> From<Lexer<'a>> for Parser<Lexer<'a>> {
+impl<I> From<I> for Parser<I>
+where
+    I: Iterator<Item = Token>,
+{
     /// Create a new [`Parser`] from a [`Lexer`].
-    fn from(lexer: Lexer<'a>) -> Self {
+    fn from(token_steam: I) -> Self {
         Self {
-            tokens: lexer.peekable(),
+            tokens: token_steam.peekable(),
         }
     }
 }
