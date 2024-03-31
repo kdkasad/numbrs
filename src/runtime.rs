@@ -74,6 +74,9 @@ use crate::{
     unit::{Unit, Units},
 };
 
+#[cfg(feature = "debug")]
+use crate::lexer::{Lexer, Token};
+
 /// # Numbrs execution runtime
 ///
 /// Handles storage of variable map and application of user preferences like
@@ -190,6 +193,52 @@ impl Runtime {
         let tree = Parser::new(input).parse()?;
         check_for_prohibited_behavior(&tree)?;
         Ok(tree.eval(&mut self.env)?)
+    }
+
+    /// # Evaluate an expression string with debug information.
+    ///
+    /// Lexes, parses, and evaluates the expression string, returning the result
+    /// if possible at each step.
+    ///
+    /// ## Returns
+    ///
+    ///  - If parsing fails: `(Vec<Token>, Result::Err(RuntimeError::Parse))`.
+    ///  - If parsing succeeds but evaluation fails: `(Vec<Token>, Result::Ok(Node, Result::Err(RuntimeError)))`.
+    ///  - If all operations succeed: `(Vec<Token>, Result::Ok(Node, Result::Ok(Value)))`.
+    ///
+    /// ## Errors
+    ///
+    /// This function always returns the
+    ///
+    /// Errors returned by [`Parser::parse()`] and [`Node::eval()`] are
+    /// propagated. The [`ParseError`] and [`EvalError`] types are encapsulated
+    /// in [`RuntimeError::Parse`] and [`RuntimeError::Eval`], respectively.
+    ///
+    /// This function will also return [`RuntimeError::AssignmentProhibited`]
+    /// when attempting to assign to the [unassignment identifier][1] or to the
+    /// name of any base quantity (see [`BaseQuantity::VARIANTS`]).
+    ///
+    /// [1]: Runtime::UNASSIGN_IDENT
+    #[allow(clippy::type_complexity)]
+    #[cfg(feature = "debug")]
+    pub fn evaluate_debug(
+        &mut self,
+        input: &str,
+    ) -> (
+        Vec<Token>,
+        Result<(Node, Result<Value, RuntimeError>), RuntimeError>,
+    ) {
+        let tokens: Vec<Token> = Lexer::new(input).collect();
+        match Parser::from(tokens.iter().cloned()).parse() {
+            Ok(tree) => {
+                let maybe_value: Result<Value, RuntimeError> = match check_for_prohibited_behavior(&tree) {
+                    Ok(()) => tree.to_owned().eval(&mut self.env).map_err(|e| e.into()),
+                    Err(e) => Err(e),
+                };
+                (tokens, Ok((tree, maybe_value)))
+            }
+            Err(e) => (tokens, Err(e.into())),
+        }
     }
 
     /// # Format a [`Value`] with configurable precision

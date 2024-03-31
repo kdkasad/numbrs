@@ -38,6 +38,10 @@ macro_rules! message {
 
 mod textio {
     pub const PROMPT: &str = "> ";
+
+    #[cfg(feature = "debug")]
+    pub const COLOR_DBG: &str = "\x1b[1;34m";
+
     pub const COLOR_ERR: &str = "\x1b[1;31m";
     pub const COLOR_WARN: &str = "\x1b[1;33m";
     pub const COLOR_RST: &str = "\x1b[m";
@@ -100,13 +104,35 @@ fn main() {
                     continue;
                 }
 
-                let value = shared_rt.borrow_mut().evaluate(&line);
-                match value {
-                    Ok(value) => match shared_rt.borrow().format(&value) {
-                        Ok(output) => println!("{}", output),
+                #[cfg(not(feature = "debug"))]
+                {
+                    let value = shared_rt.borrow_mut().evaluate(&line);
+                    match value {
+                        Ok(value) => match shared_rt.borrow().format(&value) {
+                            Ok(output) => println!("{}", output),
+                            Err(err) => eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, err),
+                        },
                         Err(err) => eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, err),
-                    },
-                    Err(err) => eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, err),
+                    }
+                }
+
+                #[cfg(feature = "debug")]
+                {
+                    let (tokens, maybe_tree) = shared_rt.borrow_mut().evaluate_debug(&line);
+                    eprintln!("{}Tokens:{} {:?}", COLOR_DBG, COLOR_RST, tokens);
+                    match maybe_tree {
+                        Ok((tree, maybe_value)) => {
+                            println!("{}Tree:{} {:?}", COLOR_DBG, COLOR_RST, tree);
+                            match maybe_value {
+                                Ok(value) => match shared_rt.borrow().format(&value) {
+                                    Ok(output) => println!("{}", output),
+                                    Err(err) => eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, err),
+                                },
+                                Err(err) => eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, err),
+                            };
+                        }
+                        Err(err) => eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, err),
+                    }
                 }
             }
 
