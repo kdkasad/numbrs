@@ -24,7 +24,7 @@ mod completion;
 
 use std::{cell::RefCell, rc::Rc};
 
-use numbrs::{affixes::standard_prefixes, runtime::Runtime};
+use numbrs::{affixes::standard_prefixes, ast::Value, runtime::{Runtime, RuntimeError}};
 use rustyline::{error::ReadlineError, CompletionType, Editor};
 
 use self::textio::*;
@@ -104,16 +104,11 @@ fn main() {
                     continue;
                 }
 
+                let maybe_value: Result<Value, RuntimeError>;
+
                 #[cfg(not(feature = "debug"))]
                 {
-                    let value = shared_rt.borrow_mut().evaluate(&line);
-                    match value {
-                        Ok(value) => match shared_rt.borrow().format(&value) {
-                            Ok(output) => println!("{}", output),
-                            Err(err) => eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, err),
-                        },
-                        Err(err) => eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, err),
-                    }
+                    maybe_value = shared_rt.borrow_mut().evaluate(&line);
                 }
 
                 #[cfg(feature = "debug")]
@@ -121,18 +116,20 @@ fn main() {
                     let (tokens, maybe_tree) = shared_rt.borrow_mut().evaluate_debug(&line);
                     eprintln!("{}Tokens:{} {:?}", COLOR_DBG, COLOR_RST, tokens);
                     match maybe_tree {
-                        Ok((tree, maybe_value)) => {
+                        Ok((tree, eval_result)) => {
                             println!("{}Tree:{} {:?}", COLOR_DBG, COLOR_RST, tree);
-                            match maybe_value {
-                                Ok(value) => match shared_rt.borrow().format(&value) {
-                                    Ok(output) => println!("{}", output),
-                                    Err(err) => eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, err),
-                                },
-                                Err(err) => eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, err),
-                            };
+                            maybe_value = eval_result;
                         }
-                        Err(err) => eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, err),
+                        Err(err) => maybe_value = Err(err),
                     }
+                }
+
+                match maybe_value {
+                    Ok(value) => match shared_rt.borrow().format(&value) {
+                        Ok(output) => println!("{}", output),
+                        Err(err) => eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, err),
+                    },
+                    Err(err) => eprintln!("{}Error:{} {}", COLOR_ERR, COLOR_RST, err),
                 }
             }
 
