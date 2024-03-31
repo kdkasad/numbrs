@@ -237,7 +237,7 @@ impl Units {
         result
     }
 
-    /// # Inverse of the [`scale()`] function.
+    /// # Inverse of the [`scale()`][Self::scale] function.
     pub fn descale(&self, n: &BigRational) -> BigRational {
         if self.0.is_empty() {
             return n.clone();

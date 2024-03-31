@@ -28,27 +28,25 @@ node is either an expression, a variable, a number, or a quantity.
 An expression ([`BinaryExpression`] or [`UnaryExpression`]) is an node which
 has one or two children nodes and performs an operation on the child(ren).
 
-A number is represented using the [`BigRational`][2] type from the [num][3]
+A number is represented using the [`BigRational`] type from the [num][2]
 crate.
 
 A [`Variable`] contains a string which, when evaluated, is looked up in the
 environment and replaced with the [Value] stored under the variable's name.
 
-A [`Quantity`] consists of a number and a [`Units`][4] object, which
+A [`Quantity`] consists of a number and a [`Units`] object, which
 represents units of a physical quantity.
 
 An expression tree can be evaluated. When evaluation succeeds, the result is
-a [`Value`], which is either a number ([`BigRational`][2]), a [`Quantity`],
+a [`Value`], which is either a number ([`BigRational`]), a [`Quantity`],
 or a [`Units`] object.
 
-See the [`parser` module][5] for a way to create expression trees from
+See the [`parser` module][3] for a way to create expression trees from
 text-based expression syntax.
 
 [1]: self::Node
-[2]: num::BigRational
-[3]: https://crates.io/crates/num
-[4]: crate::unit::Units
-[5]: crate::parser
+[2]: https://crates.io/crates/num
+[3]: crate::parser
 */
 
 use std::fmt::{self, Display};
