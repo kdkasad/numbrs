@@ -44,6 +44,9 @@ build = "build.rs"
 [package.metadata]
 copyright-years = "2022-2024"
 
+[features]
+debug = []
+
 [dependencies]
 num = "0.4.0"
 once_cell = "1.17.0"
