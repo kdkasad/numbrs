@@ -292,6 +292,15 @@ mod tests {
             ( $name:ident ) => { Node::Variable(Variable::from(stringify!($name))) };
         }
 
+        macro_rules! func {
+            ( $name:ident $arg:tt ) => {
+                Node::FunctionCall(FunctionCall {
+                    function: Function::from_str(stringify!($name)).unwrap(),
+                    args: vec![subexpr!($arg)],
+                })
+            };
+        }
+
         let cases: Vec<(&'static str, Node)> = vec![
             ("1", subexpr!(1)),
             ("var", subexpr!(var)),
@@ -319,6 +328,11 @@ mod tests {
             ("180.", subexpr!(180)),
             // TODO: add tests for units
             ("1/360 circle", binexpr!("*" ("/" 1 360) circle)),
+            ("sin(1 + 2)", func!(sin ("+" 1 2))),
+            (
+                "cos ( pi + 3 degrees )",
+                func!(cos ("+" pi ("*" 3 degrees))),
+            ),
         ];
 
         for (input, expected_result) in cases {
