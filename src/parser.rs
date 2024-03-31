@@ -89,10 +89,10 @@ where
     ///
     /// [1]: crate::ast
     pub fn parse(mut self) -> Result<Node, ParseError> {
-        self.parse_expr(0)
+        Ok(extract(self.parse_expr(0, false)?))
     }
 
-    fn parse_expr(&mut self, min_bp: u32) -> Result<Node, ParseError> {
+    fn parse_expr(&mut self, min_bp: u32, accept_multi: bool) -> Result<Vec<Node>, ParseError> {
         let mut lhs: Node = match self.tokens.next() {
             Some(tok) => match tok {
                 Token::Number(numstr) => Node::Number(str_to_num(&numstr)?),
@@ -103,13 +103,13 @@ where
                         if let Ok(function) = Function::from_str(&name) {
                             // Consume group begin
                             self.tokens.next();
-                            let arg = self.parse_expr(0)?;
+                            let args = self.parse_expr(0, true)?;
                             // Consume group end
                             match self.tokens.next() {
                                 Some(Token::GroupEnd) => (),
                                 _ => return Err(ParseError::UnmatchedGroup),
                             }
-                            Node::FunctionCall(FunctionCall::new(function, vec![arg]))
+                            Node::FunctionCall(FunctionCall::new(function, args))
                         } else {
                             Node::Variable(Variable::from(name))
                         }
@@ -119,7 +119,7 @@ where
                 }
                 Token::GroupBegin => {
                     // when left paren encountered, parse sub-expression
-                    let lhs = self.parse_expr(0)?;
+                    let lhs = extract(self.parse_expr(0, false)?);
                     // consume right paren
                     match self.tokens.next() {
                         Some(Token::GroupEnd) => (),
@@ -130,7 +130,7 @@ where
                 Token::Operator(op) => {
                     if let Some(op) = op.try_to_unary() {
                         let ((), r_bp) = prefix_binding_power(op);
-                        let expr = self.parse_expr(r_bp)?;
+                        let expr = extract(self.parse_expr(r_bp, false)?);
                         Node::from(UnaryExpression {
                             operation: op,
                             expr: Box::new(expr),
@@ -140,7 +140,9 @@ where
                     }
                 }
                 Token::GroupEnd => return Err(ParseError::ExpectedOperand(tok.into())),
-                Token::Illegal(c) => return Err(ParseError::IllegalToken(c)),
+                Token::Illegal(c) | Token::ListSeparator(c) => {
+                    return Err(ParseError::IllegalToken(c))
+                }
             },
             None => return Err(ParseError::EndOfStream),
         };
@@ -155,8 +157,16 @@ where
                     Operation::Multiply
                 }
                 Token::GroupEnd => break,
+                Token::ListSeparator(_) if accept_multi => {
+                    self.tokens.next(); // Consume separator
+                    let mut rest = self.parse_expr(min_bp, true)?;
+                    rest.insert(0, lhs);
+                    return Ok(rest);
+                }
                 Token::Number(_) => return Err(ParseError::ExpectedToken("operator", tok.into())),
-                Token::Illegal(c) => return Err(ParseError::IllegalToken(c)),
+                Token::Illegal(c) | Token::ListSeparator(c) => {
+                    return Err(ParseError::IllegalToken(c))
+                }
             };
 
             let (l_bp, r_bp) = infix_binding_power(op);
@@ -169,7 +179,7 @@ where
                 self.tokens.next();
             }
 
-            let rhs = self.parse_expr(r_bp)?;
+            let rhs = extract(self.parse_expr(r_bp, false)?);
 
             lhs = Node::BinaryExpression(BinaryExpression {
                 operation: op,
@@ -178,7 +188,18 @@ where
             });
         }
 
-        Ok(lhs)
+        Ok(vec![lhs])
+    }
+}
+
+/// Extract the first element from a [`Vec`].
+///
+/// Panics if the vector has anything other than exactly one element.
+fn extract<T>(mut vec: Vec<T>) -> T {
+    if vec.len() != 1 {
+        panic!("Expected exactly one element, got {} elements", vec.len());
+    } else {
+        vec.swap_remove(0)
     }
 }
 
