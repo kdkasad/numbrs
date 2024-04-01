@@ -65,6 +65,10 @@ pub enum Function {
     /// ## Greatest common denominator
     #[strum(serialize = "gcd")]
     GCD,
+
+    /// ## Least common multiple
+    #[strum(serialize = "lcm")]
+    LCM,
 }
 
 impl Function {
@@ -73,7 +77,7 @@ impl Function {
         use Function::*;
         match self {
             Sine | Cosine | AbsoluteValue | SquareRoot | NaturalLogarithm => 1,
-            GCD => 2,
+            GCD | LCM => 2,
         }
     }
 
@@ -93,13 +97,19 @@ impl Function {
                 args.len(),
             ));
         }
+        macro_rules! arg {
+            () => {
+                args.pop().unwrap()
+            };
+        }
         Ok(match self {
-            Sine => sin(args.swap_remove(0))?,
-            Cosine => cos(args.swap_remove(0))?,
-            AbsoluteValue => abs(args.swap_remove(0)),
-            SquareRoot => sqrt(args.swap_remove(0))?,
-            NaturalLogarithm => ln(args.swap_remove(0))?,
-            GCD => gcd(args.swap_remove(0), args.swap_remove(0))?,
+            Sine => sin(arg!())?,
+            Cosine => cos(arg!())?,
+            AbsoluteValue => abs(arg!()),
+            SquareRoot => sqrt(arg!())?,
+            NaturalLogarithm => ln(arg!())?,
+            GCD => gcd(arg!(), arg!())?,
+            LCM => lcm(arg!(), arg!())?,
         }
         .into())
     }
@@ -185,6 +195,10 @@ fn gcd(a: BigRational, b: BigRational) -> Result<BigRational, EvalError> {
         y = r;
     }
     Ok(x.into())
+}
+
+fn lcm(a: BigRational, b: BigRational) -> Result<BigRational, EvalError> {
+    Ok(&a * &b / gcd(a, b)?)
 }
 
 #[cfg(test)]

@@ -21,7 +21,7 @@ The goal of Numbrs is twofold:
         - [x] Perform arithmetic on quantities
         - [x] Convert quantities between units
         - [ ] (optional) Define custom base quantities (e.g. currency)
-    - [ ] GCD and LCM calculations
+    - [x] GCD and LCM calculations
     - [ ] Modular arithmetic
 
 ## Installation
