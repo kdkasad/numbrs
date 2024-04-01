@@ -89,7 +89,13 @@ where
     ///
     /// [1]: crate::ast
     pub fn parse(mut self) -> Result<Node, ParseError> {
-        Ok(extract(self.parse_expr(0, false)?))
+        let result = extract(self.parse_expr(0, false)?);
+        if self.tokens.next().is_some() {
+            // The only case where this will happen is if the next token is a group close token
+            Err(ParseError::UnmatchedGroup)
+        } else {
+            Ok(result)
+        }
     }
 
     fn parse_expr(&mut self, min_bp: u32, accept_multi: bool) -> Result<Vec<Node>, ParseError> {
