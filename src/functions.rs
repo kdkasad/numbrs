@@ -82,7 +82,7 @@ impl Function {
     pub fn eval(&self, mut args: Vec<BigRational>) -> Result<Value, EvalError> {
         use Function::*;
         if args.len() != self.number_of_args() {
-            return Err(EvalError::InvalidFunctionArguments(
+            return Err(EvalError::NumberOfFunctionArguments(
                 *self,
                 self.number_of_args(),
                 args.len(),

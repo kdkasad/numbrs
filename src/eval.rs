@@ -617,12 +617,12 @@ pub enum EvalError {
     ///  2. The number of arguments expected
     ///  3. The number of arguments given
     #[error("Function `{0}` expects {1} arguments, got {2}")]
-    InvalidFunctionArguments(Function, usize, usize),
+    NumberOfFunctionArguments(Function, usize, usize),
 
     /// # Non-pure value used in a context where a pure value is required
     ///
     /// The invalid value is stored in the tuple field.
-    #[error("Non-pure value `{0}` used in a context where a pure value is required")]
+    #[error("Non-number value `{0}` used in a context where a pure number value is required")]
     NonPureValue(Value),
 
     /// # Overflow occurred during evaluation
