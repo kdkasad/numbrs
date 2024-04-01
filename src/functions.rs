@@ -21,7 +21,7 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 //! Mathematical functions
 
-use num::{BigRational, FromPrimitive, Signed, ToPrimitive};
+use num::{BigRational, FromPrimitive, Integer, Signed, ToPrimitive, Zero};
 use strum_macros::{Display, EnumString};
 
 use crate::{ast::Value, eval::EvalError};
@@ -31,36 +31,40 @@ use crate::{ast::Value, eval::EvalError};
 /// The functions that can be used in the calculator.
 #[derive(EnumString, Display, Debug, PartialEq, Clone, Copy)]
 pub enum Function {
-    /// # Sine function
+    /// ## Sine function
     ///
     /// Expects 1 argument.
     #[strum(serialize = "sin")]
     Sine,
 
-    /// # Cosine function
+    /// ## Cosine function
     ///
     /// Expects 1 argument.
     #[strum(serialize = "cos")]
     Cosine,
 
-    /// # Absolute value function
+    /// ## Absolute value function
     ///
     /// Expects 1 argument.
     /// Returns the distance of the argument from zero.
     #[strum(serialize = "abs")]
     AbsoluteValue,
 
-    /// # Square root function
+    /// ## Square root function
     ///
     /// Expects 1 argument.
     #[strum(serialize = "sqrt")]
     SquareRoot,
 
-    /// # Natural logarithm function
+    /// ## Natural logarithm function
     ///
     /// Expects 1 argument.
     #[strum(serialize = "ln")]
     NaturalLogarithm,
+
+    /// ## Greatest common denominator
+    #[strum(serialize = "gcd")]
+    GCD,
 }
 
 impl Function {
@@ -69,6 +73,7 @@ impl Function {
         use Function::*;
         match self {
             Sine | Cosine | AbsoluteValue | SquareRoot | NaturalLogarithm => 1,
+            GCD => 2,
         }
     }
 
@@ -88,13 +93,13 @@ impl Function {
                 args.len(),
             ));
         }
-        let arg = args.swap_remove(0);
         Ok(match self {
-            Sine => sin(arg)?,
-            Cosine => cos(arg)?,
-            AbsoluteValue => abs(arg),
-            SquareRoot => sqrt(arg)?,
-            NaturalLogarithm => ln(arg)?,
+            Sine => sin(args.swap_remove(0))?,
+            Cosine => cos(args.swap_remove(0))?,
+            AbsoluteValue => abs(args.swap_remove(0)),
+            SquareRoot => sqrt(args.swap_remove(0))?,
+            NaturalLogarithm => ln(args.swap_remove(0))?,
+            GCD => gcd(args.swap_remove(0), args.swap_remove(0))?,
         }
         .into())
     }
@@ -153,5 +158,54 @@ fn sqrt(arg: BigRational) -> Result<BigRational, EvalError> {
             }
         }
         None => Err(EvalError::Overflow(arg)),
+    }
+}
+
+fn gcd(a: BigRational, b: BigRational) -> Result<BigRational, EvalError> {
+    if !a.is_integer() {
+        return Err(EvalError::NonIntegerFunctionArgument(
+            Function::GCD,
+            a.into(),
+        ));
+    }
+    if !b.is_integer() {
+        return Err(EvalError::NonIntegerFunctionArgument(
+            Function::GCD,
+            b.into(),
+        ));
+    }
+
+    let mut x = a.to_integer();
+    let mut y = b.to_integer();
+
+    // We could use the num::Integer::gcd() function, but I want to implement it myself.
+    while !y.is_zero() {
+        let r = x.mod_floor(&y);
+        x = y;
+        y = r;
+    }
+    Ok(x.into())
+}
+
+#[cfg(test)]
+mod tests {
+    use pretty_assertions::assert_eq;
+
+    use crate::rat_util_macros::rat;
+
+    #[test]
+    fn gcd() {
+        macro_rules! case {
+            ($a:literal, $b:literal = $expected:literal) => {
+                assert_eq!(super::gcd(rat!($a), rat!($b)).unwrap(), rat!($expected));
+            };
+        }
+
+        case!(0, 0 = 0);
+        case!(1, 15 = 1);
+        case!(34985, 1 = 1);
+        case!(12, 15 = 3);
+        case!(15, 12 = 3);
+        case!(-5, 25 = 5);
     }
 }

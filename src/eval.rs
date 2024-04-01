@@ -619,6 +619,13 @@ pub enum EvalError {
     #[error("Function `{0}` expects {1} arguments, got {2}")]
     NumberOfFunctionArguments(Function, usize, usize),
 
+    /// # Non-integer argument given to a function which requires integers.
+    ///
+    /// The referenced function and the offending argument are stored in this
+    /// error variant's tuple fields.
+    #[error("Function `{0}` requires integer arguments, got `{1}`")]
+    NonIntegerFunctionArgument(Function, Value),
+
     /// # Non-pure value used in a context where a pure value is required
     ///
     /// The invalid value is stored in the tuple field.
