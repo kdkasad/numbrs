@@ -53,7 +53,7 @@ use std::fmt::{self, Display};
 
 use num::BigRational;
 
-use crate::{operation::Operation, rat_util_macros::rat, unit::Units};
+use crate::{functions::Function, operation::Operation, rat_util_macros::rat, unit::Units};
 
 /// # Physical quantity
 ///
@@ -207,6 +207,33 @@ impl BinaryExpression {
     }
 }
 
+/// # Function call expression
+///
+/// A [`FunctionCall`] is an [AST node][1] type which represents calling a
+/// function with some arguments.
+///
+/// The function is represented by the [`Function`] enum.
+///
+/// The arguments are represented by a [`Vec<Node>`]. The number of arguments
+/// must match the number of arguments given in the function variant's
+/// documentation.
+///
+/// [1]: crate::ast
+#[derive(Debug, Clone, PartialEq)]
+pub struct FunctionCall {
+    pub(crate) function: Function,
+    pub(crate) args: Vec<Node>,
+}
+
+impl FunctionCall {
+    /// # Create a new function
+    ///
+    /// Uses the given [function][Function] and argument list.
+    pub fn new(function: Function, args: Vec<Node>) -> Self {
+        Self { function, args }
+    }
+}
+
 /// # Expression result value
 ///
 /// Evaluating an expression returns a [`Value`], which is either a
@@ -279,6 +306,9 @@ pub enum Node {
     ///
     /// See [`ast::Quantity`][Quantity].
     Quantity(Quantity),
+
+    /// Function call
+    FunctionCall(FunctionCall),
 }
 
 impl From<BigRational> for Node {

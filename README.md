@@ -21,7 +21,7 @@ The goal of Numbrs is twofold:
         - [x] Perform arithmetic on quantities
         - [x] Convert quantities between units
         - [ ] (optional) Define custom base quantities (e.g. currency)
-    - [ ] GCD and LCM calculations
+    - [x] GCD and LCM calculations
     - [ ] Modular arithmetic
 
 ## Installation
@@ -206,6 +206,29 @@ If a non-integer value is assigned, an error occurs and a message is printed.
 The positive value *N* will round to *N* places to the right of the decimal
 point. The negative value *-N* will round so that *N* places to the left of the
 decimal point contain zeros.
+
+### Functions
+
+Numbrs supoprt some built-in functions. Functions are called by preceding a
+group (e.g. parentheses) with the function identifier.
+
+Example:
+
+    $ numbrs
+    > sin(0)
+    0
+    > cos(180 degrees)
+    -1.00000
+
+Currently, the following functions are supported:
+
+| Function             | Idenfifier  | Number of arguments |
+| ---                  | ---         | ---                 |
+| Sine                 | `sin`       | 1                   |
+| Cosine               | `cos`       | 1                   |
+| Absolute value       | `abs`       | 1                   |
+| Square root          | `sqrt`      | 1                   |
+| Natural logarithm    | `ln`        | 1                   |
 
 ### Units
 

@@ -231,10 +231,11 @@ impl Runtime {
         let tokens: Vec<Token> = Lexer::new(input).collect();
         match Parser::from(tokens.iter().cloned()).parse() {
             Ok(tree) => {
-                let maybe_value: Result<Value, RuntimeError> = match check_for_prohibited_behavior(&tree) {
-                    Ok(()) => tree.to_owned().eval(&mut self.env).map_err(|e| e.into()),
-                    Err(e) => Err(e),
-                };
+                let maybe_value: Result<Value, RuntimeError> =
+                    match check_for_prohibited_behavior(&tree) {
+                        Ok(()) => tree.to_owned().eval(&mut self.env).map_err(|e| e.into()),
+                        Err(e) => Err(e),
+                    };
                 (tokens, Ok((tree, maybe_value)))
             }
             Err(e) => (tokens, Err(e.into())),
@@ -313,7 +314,7 @@ fn check_for_prohibited_behavior(tree: &Node) -> Result<(), RuntimeError> {
         }
 
         Node::UnaryExpression(UnaryExpression { expr, .. }) => check_for_prohibited_behavior(expr),
-        Node::Variable(_) | Node::Number(_) | Node::Quantity(_) => Ok(()),
+        Node::Variable(_) | Node::Number(_) | Node::Quantity(_) | Node::FunctionCall(_) => Ok(()),
     }
 }
 

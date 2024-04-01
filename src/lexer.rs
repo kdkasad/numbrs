@@ -87,6 +87,13 @@ pub enum Token {
     #[strum(serialize = "group close")]
     GroupEnd,
 
+    /// ## List separator
+    ///
+    /// Used to separate function arguments.
+    ///
+    /// Contains the specific character found in the input.
+    ListSeparator(char),
+
     /// ## Illegal token
     ///
     /// Represents an unexpected token which is not supposed to exist where it
@@ -141,6 +148,9 @@ impl Iterator for Lexer<'_> {
                 } else if ")}]".contains(c) {
                     self.chars.next();
                     Some(Token::GroupEnd)
+                } else if c == ',' {
+                    self.chars.next();
+                    Some(Token::ListSeparator(c))
                 } else if let Ok(op) = Operation::from_str(&c.to_string()) {
                     // c is an operator character
                     // consume the character and return and operator token
