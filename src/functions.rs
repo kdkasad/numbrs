@@ -21,10 +21,10 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 //! Mathematical functions
 
-use num::{BigRational, FromPrimitive, Integer, Signed, ToPrimitive, Zero};
+use num::{BigInt, BigRational, FromPrimitive, Integer, One, Signed, ToPrimitive, Zero};
 use strum_macros::{Display, EnumString};
 
-use crate::{ast::Value, eval::EvalError};
+use crate::{ast::Value, eval::EvalError, rat_util_macros::rat};
 
 /// # Mathematical functions
 ///
@@ -69,6 +69,18 @@ pub enum Function {
     /// ## Least common multiple
     #[strum(serialize = "lcm")]
     LCM,
+
+    /// ## Combinatorics choose function
+    #[strum(serialize = "choose")]
+    Choose,
+
+    /// ## Combinatorics permutation function
+    #[strum(serialize = "permute")]
+    Permute,
+
+    /// ## Factorial function
+    #[strum(serialize = "factorial")]
+    Factorial,
 }
 
 impl Function {
@@ -76,8 +88,8 @@ impl Function {
     fn number_of_args(&self) -> usize {
         use Function::*;
         match self {
-            Sine | Cosine | AbsoluteValue | SquareRoot | NaturalLogarithm => 1,
-            GCD | LCM => 2,
+            Sine | Cosine | AbsoluteValue | SquareRoot | NaturalLogarithm | Factorial => 1,
+            GCD | LCM | Choose | Permute => 2,
         }
     }
 
@@ -85,7 +97,7 @@ impl Function {
     ///
     /// ## Errors
     ///
-    /// Returns [`EvalError::InvalidFunctionArguments`] if the number of
+    /// Returns [`EvalError::NumberOfFunctionArguments`] if the number of
     /// arguments provided doesn't match the number expected for the function
     /// being called.
     pub fn eval(&self, mut args: Vec<BigRational>) -> Result<Value, EvalError> {
@@ -99,7 +111,7 @@ impl Function {
         }
         macro_rules! arg {
             () => {
-                args.pop().unwrap()
+                args.remove(0)
             };
         }
         Ok(match self {
@@ -110,6 +122,9 @@ impl Function {
             NaturalLogarithm => ln(arg!())?,
             GCD => gcd(arg!(), arg!())?,
             LCM => lcm(arg!(), arg!())?,
+            Choose => choose(arg!(), arg!())?,
+            Permute => permute(arg!(), arg!())?,
+            Factorial => factorial(arg!())?,
         }
         .into())
     }
@@ -199,6 +214,68 @@ fn gcd(a: BigRational, b: BigRational) -> Result<BigRational, EvalError> {
 
 fn lcm(a: BigRational, b: BigRational) -> Result<BigRational, EvalError> {
     Ok(&a * &b / gcd(a, b)?)
+}
+
+fn choose(n: BigRational, r: BigRational) -> Result<BigRational, EvalError> {
+    if !n.is_integer() {
+        return Err(EvalError::NonIntegerFunctionArgument(
+            Function::Choose,
+            n.into(),
+        ));
+    }
+    if !r.is_integer() {
+        return Err(EvalError::NonIntegerFunctionArgument(
+            Function::Choose,
+            r.into(),
+        ));
+    }
+    Ok(permute(n, r.to_owned())? / factorial(r)?)
+}
+
+fn permute(n: BigRational, r: BigRational) -> Result<BigRational, EvalError> {
+    if !n.is_integer() {
+        return Err(EvalError::NonIntegerFunctionArgument(
+            Function::Permute,
+            n.into(),
+        ));
+    }
+    if !r.is_integer() {
+        return Err(EvalError::NonIntegerFunctionArgument(
+            Function::Permute,
+            r.into(),
+        ));
+    }
+    if n < r {
+        return Ok(rat!(-1));
+    }
+    let n_int = n.to_integer();
+    let mut denom: BigInt = &n_int - r.to_integer() + 1;
+    let mut result = BigInt::one();
+    while denom <= n_int {
+        result *= &denom;
+        denom += 1;
+    }
+    Ok(result.into())
+}
+
+fn factorial(n: BigRational) -> Result<BigRational, EvalError> {
+    if !n.is_integer() {
+        return Err(EvalError::NonIntegerFunctionArgument(
+            Function::Permute,
+            n.into(),
+        ));
+    }
+    if n.is_zero() {
+        return Ok(rat!(1));
+    }
+    let n_int = n.to_integer();
+    let mut result = BigInt::one();
+    let mut step = BigInt::one() + 1;
+    while step <= n_int {
+        result *= &step;
+        step += 1;
+    }
+    Ok(result.into())
 }
 
 #[cfg(test)]
