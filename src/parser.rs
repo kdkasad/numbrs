@@ -89,16 +89,20 @@ where
     ///
     /// [1]: crate::ast
     pub fn parse(mut self) -> Result<Node, ParseError> {
-        let result = extract(self.parse_expr(0, false)?);
-        if self.tokens.next().is_some() {
-            // The only case where this will happen is if the next token is a group close token
-            Err(ParseError::UnmatchedGroup)
+        let result = self.parse_expr(0)?;
+        if let Some(token) = self.tokens.next() {
+            // The only cases where this will happen is if the next token is a group close token or a list separator
+            Err(match token {
+                Token::GroupEnd => ParseError::UnmatchedGroup,
+                Token::ListSeparator(c) => ParseError::IllegalToken(c),
+                token => unreachable!("Expected end of input, found token: {:?}", token),
+            })
         } else {
             Ok(result)
         }
     }
 
-    fn parse_expr(&mut self, min_bp: u32, accept_multi: bool) -> Result<Vec<Node>, ParseError> {
+    fn parse_expr(&mut self, min_bp: u32) -> Result<Node, ParseError> {
         let mut lhs: Node = match self.tokens.next() {
             Some(tok) => match tok {
                 Token::Number(numstr) => Node::Number(str_to_num(&numstr)?),
@@ -109,11 +113,16 @@ where
                         if let Ok(function) = Function::from_str(&name) {
                             // Consume group begin
                             self.tokens.next();
-                            let args = self.parse_expr(0, true)?;
-                            // Consume group end
-                            match self.tokens.next() {
-                                Some(Token::GroupEnd) => (),
-                                _ => return Err(ParseError::UnmatchedGroup),
+                            let mut args = Vec::new();
+                            loop {
+                                let arg = self.parse_expr(0)?;
+                                args.push(arg);
+                                // Consume separator or group end
+                                match self.tokens.next() {
+                                    Some(Token::GroupEnd) => break,
+                                    Some(Token::ListSeparator(_)) => (),
+                                    _ => return Err(ParseError::UnmatchedGroup),
+                                }
                             }
                             Node::FunctionCall(FunctionCall::new(function, args))
                         } else {
@@ -125,10 +134,11 @@ where
                 }
                 Token::GroupBegin => {
                     // when left paren encountered, parse sub-expression
-                    let lhs = extract(self.parse_expr(0, false)?);
+                    let lhs = self.parse_expr(0)?;
                     // consume right paren
                     match self.tokens.next() {
                         Some(Token::GroupEnd) => (),
+                        Some(Token::ListSeparator(c)) => return Err(ParseError::IllegalToken(c)),
                         _ => return Err(ParseError::UnmatchedGroup),
                     }
                     lhs
@@ -136,7 +146,7 @@ where
                 Token::Operator(op) => {
                     if let Some(op) = op.try_to_unary() {
                         let ((), r_bp) = prefix_binding_power(op);
-                        let expr = extract(self.parse_expr(r_bp, false)?);
+                        let expr = self.parse_expr(r_bp)?;
                         Node::from(UnaryExpression {
                             operation: op,
                             expr: Box::new(expr),
@@ -145,10 +155,10 @@ where
                         return Err(ParseError::ExpectedOperand(tok.into()));
                     }
                 }
-                Token::GroupEnd => return Err(ParseError::ExpectedOperand(tok.into())),
-                Token::Illegal(c) | Token::ListSeparator(c) => {
-                    return Err(ParseError::IllegalToken(c))
+                Token::GroupEnd | Token::ListSeparator(_) => {
+                    return Err(ParseError::ExpectedOperand(tok.into()))
                 }
+                Token::Illegal(c) => return Err(ParseError::IllegalToken(c)),
             },
             None => return Err(ParseError::EndOfStream),
         };
@@ -162,17 +172,9 @@ where
                     implicit = true;
                     Operation::Multiply
                 }
-                Token::GroupEnd => break,
-                Token::ListSeparator(_) if accept_multi => {
-                    self.tokens.next(); // Consume separator
-                    let mut rest = self.parse_expr(min_bp, true)?;
-                    rest.insert(0, lhs);
-                    return Ok(rest);
-                }
+                Token::GroupEnd | Token::ListSeparator(_) => break,
                 Token::Number(_) => return Err(ParseError::ExpectedToken("operator", tok.into())),
-                Token::Illegal(c) | Token::ListSeparator(c) => {
-                    return Err(ParseError::IllegalToken(c))
-                }
+                Token::Illegal(c) => return Err(ParseError::IllegalToken(c)),
             };
 
             let (l_bp, r_bp) = infix_binding_power(op);
@@ -185,7 +187,7 @@ where
                 self.tokens.next();
             }
 
-            let rhs = extract(self.parse_expr(r_bp, false)?);
+            let rhs = self.parse_expr(r_bp)?;
 
             lhs = Node::BinaryExpression(BinaryExpression {
                 operation: op,
@@ -194,18 +196,7 @@ where
             });
         }
 
-        Ok(vec![lhs])
-    }
-}
-
-/// Extract the first element from a [`Vec`].
-///
-/// Panics if the vector has anything other than exactly one element.
-fn extract<T>(mut vec: Vec<T>) -> T {
-    if vec.len() != 1 {
-        panic!("Expected exactly one element, got {} elements", vec.len());
-    } else {
-        vec.swap_remove(0)
+        Ok(lhs)
     }
 }
 
@@ -312,6 +303,9 @@ mod tests {
             };
         }
         macro_rules! subexpr {
+            ( (f: $($e:tt)+ ) ) => {
+                func!( $($e)+ )
+            };
             ( ( $($e:tt)+ ) ) => {
                 binexpr!( $($e)+ )
             };
@@ -320,10 +314,10 @@ mod tests {
         }
 
         macro_rules! func {
-            ( $name:ident $arg:tt ) => {
+            ( $name:ident $( $arg:tt ),+ ) => {
                 Node::FunctionCall(FunctionCall {
                     function: Function::from_str(stringify!($name)).unwrap(),
-                    args: vec![subexpr!($arg)],
+                    args: vec![$( subexpr!($arg), )+],
                 })
             };
         }
@@ -360,6 +354,18 @@ mod tests {
                 "cos ( pi + 3 degrees )",
                 func!(cos ("+" pi ("*" 3 degrees))),
             ),
+            ("gcd(10 + 5, 12)", func!(gcd ("+" 10 5), 12)),
+            ("factorial(1,2,3,4,5)", func!(factorial 1, 2, 3, 4, 5)),
+            ("fact(1,2,3,4,5)", func!(fact 1, 2, 3, 4, 5)),
+            ("a * b / gcd(a, b)", binexpr!("/" ("*" a b) (f: gcd a, b))),
+            (
+                "choose(foo = 1 + 2^3)",
+                func!(choose ("=" foo ("+" 1 ("^" 2 3)))),
+            ),
+            (
+                "snooze(foo = 1 + 2^3)", // Not a function identifier
+                binexpr!("*" snooze ("=" foo ("+" 1 ("^" 2 3)))),
+            ),
         ];
 
         for (input, expected_result) in cases {
@@ -384,11 +390,14 @@ mod tests {
         }
 
         testfor! {
-            ParseError::EndOfStream => ["", "\t \t\n\n  ", "1 +", "1 + 8 ^ ", "+", "-", "1 * +"];
+            ParseError::EndOfStream => ["", "\t \t\n\n  ", "1 +", "1 + 8 ^ ", "+", "-", "1 * +", "("];
             ParseError::ExpectedOperand("operator") => ["*", "/"];
+            ParseError::ExpectedOperand("list separator") => ["sin(,)", ",", "lcm(,12)"];
+            ParseError::ExpectedOperand("group close") => [")", "gcd(12,)", "cos()"];
             ParseError::ExpectedToken("operator", _got) => ["1 a 2"];
-            ParseError::IllegalToken(_) => ["123 ? 456", "&", "#001"];
+            ParseError::IllegalToken(_) => ["123 ? 456", "&", "#001", "1234 , 5678"];
             ParseError::ParseNumberLiteral(_) => ["1.2.3"];
+            ParseError::UnmatchedGroup => ["1 + (2", "1 + 2)", "1 + (2 + 3", "1 + 2) + 3"];
         }
     }
 }
