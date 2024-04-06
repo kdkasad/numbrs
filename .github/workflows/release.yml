@@ -9,7 +9,7 @@ jobs:
   build:
     name: Build
     uses: ./.github/workflows/build.yml
-    
+
   publish-binaries:
     name: Upload Numbrs binaries to GitHub release
     if: ${{ github.event_name == 'release' }}
@@ -17,10 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download binary artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
       - name: Publish binaries
         run: |
