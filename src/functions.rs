@@ -108,7 +108,7 @@ pub enum Function {
     /// Expects 1 *positive integer* argument.
     /// Returns the factorial of the argument, i.e. (1 × 2 × 3 × ... × N).
     /// If N < 1, returns 1.
-    #[strum(serialize = "factorial")]
+    #[strum(serialize = "factorial", serialize = "fact")]
     Factorial,
 }
 
