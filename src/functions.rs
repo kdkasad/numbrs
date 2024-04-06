@@ -23,8 +23,9 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 use num::{BigInt, BigRational, FromPrimitive, Integer, One, Signed, ToPrimitive, Zero};
 use strum_macros::{Display, EnumString};
+use thiserror::Error;
 
-use crate::{ast::Value, eval::EvalError, rat_util_macros::rat};
+use crate::ast::Value;
 
 /// # Mathematical functions
 ///
@@ -34,12 +35,14 @@ pub enum Function {
     /// ## Sine function
     ///
     /// Expects 1 argument.
+    /// Calculates the sine of that argument in radians.
     #[strum(serialize = "sin")]
     Sine,
 
     /// ## Cosine function
     ///
     /// Expects 1 argument.
+    /// Calculates the cosine of that argument in radians.
     #[strum(serialize = "cos")]
     Cosine,
 
@@ -53,32 +56,58 @@ pub enum Function {
     /// ## Square root function
     ///
     /// Expects 1 argument.
+    /// Returns the square root of the argument.
     #[strum(serialize = "sqrt")]
     SquareRoot,
 
     /// ## Natural logarithm function
     ///
     /// Expects 1 argument.
+    /// Returns the natural logarithm of the argument.
     #[strum(serialize = "ln")]
     NaturalLogarithm,
 
     /// ## Greatest common denominator
+    ///
+    /// Expects 2 *integer* arguments.
+    /// Returns the greatest common demoninator of the two arguments.
     #[strum(serialize = "gcd")]
     GCD,
 
     /// ## Least common multiple
+    ///
+    /// Expects 2 *integer* arguments.
+    /// Returns the least common multiple of the two arguments.
     #[strum(serialize = "lcm")]
     LCM,
 
     /// ## Combinatorics choose function
+    ///
+    /// Expects 2 *integer* arguments.
+    /// Returns the number of unique ways to choose R items from N items,
+    /// where N is the first argument and R is the second.
+    /// If N < R, returns 0.
+    ///
+    /// See [https://en.wikipedia.org/wiki/Combination].
     #[strum(serialize = "choose")]
     Choose,
 
     /// ## Combinatorics permutation function
+    ///
+    /// Expects 2 *integer* arguments.
+    /// Returns the number of permutations of R items from N items,
+    /// where N is the first argument and R is the second.
+    /// If N < R, returns 0.
+    ///
+    /// See [https://en.wikipedia.org/wiki/Permutation].
     #[strum(serialize = "permute")]
     Permute,
 
     /// ## Factorial function
+    ///
+    /// Expects 1 *positive integer* argument.
+    /// Returns the factorial of the argument, i.e. (1 × 2 × 3 × ... × N).
+    /// If N < 1, returns 1.
     #[strum(serialize = "factorial")]
     Factorial,
 }
@@ -97,13 +126,11 @@ impl Function {
     ///
     /// ## Errors
     ///
-    /// Returns [`EvalError::NumberOfFunctionArguments`] if the number of
-    /// arguments provided doesn't match the number expected for the function
-    /// being called.
-    pub fn eval(&self, mut args: Vec<BigRational>) -> Result<Value, EvalError> {
+    /// Returns a [`FunctionCallError`] if evaluation of a function fails.
+    pub fn eval(&self, mut args: Vec<BigRational>) -> Result<Value, FunctionCallError> {
         use Function::*;
         if args.len() != self.number_of_args() {
-            return Err(EvalError::NumberOfFunctionArguments(
+            return Err(FunctionCallError::NumberOfArguments(
                 *self,
                 self.number_of_args(),
                 args.len(),
@@ -130,29 +157,67 @@ impl Function {
     }
 }
 
-fn sin(arg: BigRational) -> Result<BigRational, EvalError> {
+/// # Function call error
+///
+/// Represents an error that has occurred during the calling or computation of a
+/// function.
+#[derive(Error, Debug)]
+pub enum FunctionCallError {
+    /// Function argument number mismatch.
+    ///
+    /// This error occurs when a function is called with the wrong number of arguments.
+    #[error("Function `{0}` expected {1} arguments, but got {2}")]
+    NumberOfArguments(Function, usize, usize),
+
+    /// Non-integer argument.
+    ///
+    /// This error occurs when a function that expects an integer argument is
+    /// called with a non-integer argument.
+    #[error("Function `{0}` expected an integer, but got `{1}`")]
+    NonIntegerArgument(Function, BigRational),
+
+    /// # Overflow occurred during evaluation
+    #[error("Number `{0}` too large. Overflow occurred during function computation.")]
+    Overflow(BigRational),
+}
+
+/// Check to make sure `n` is an integer.
+///
+/// Returns:
+///  - If `n` is an integer, returns `Ok( () )`.
+///  - If `n` is not an integer, returns `Err( FunctionCallError::NonIntegerArgument )`.
+///    The `func` argument is used as the function field in the error.
+fn check_integer(func: Function, n: BigRational) -> Result<BigRational, FunctionCallError> {
+    if n.is_integer() {
+        Ok(n)
+    } else {
+        Err(FunctionCallError::NonIntegerArgument(func, n))
+    }
+}
+
+fn sin(arg: BigRational) -> Result<BigRational, FunctionCallError> {
     match arg.to_f64() {
         Some(float) => {
             let sin = float.sin();
             match BigRational::from_f64(sin) {
                 Some(rat) => Ok(rat),
-                None => Err(EvalError::Overflow(arg)),
+                None => Err(FunctionCallError::Overflow(arg)),
             }
         }
-        None => Err(EvalError::Overflow(arg)),
+        None => Err(FunctionCallError::Overflow(arg)),
     }
 }
 
-fn cos(arg: BigRational) -> Result<BigRational, EvalError> {
+fn cos(arg: BigRational) -> Result<BigRational, FunctionCallError> {
     match arg.to_f64() {
         Some(float) => {
             let cos = float.cos();
             match BigRational::from_f64(cos) {
                 Some(rat) => Ok(rat),
-                None => Err(EvalError::Overflow(arg)),
+                None => Err(FunctionCallError::Overflow(arg)),
             }
         }
-        None => Err(EvalError::Overflow(arg)),
+        None => Err(FunctionCallError::Overflow(arg)),
     }
 }
 
@@ -160,48 +225,35 @@ fn abs(arg: BigRational) -> BigRational {
     arg.abs()
 }
 
-fn ln(arg: BigRational) -> Result<BigRational, EvalError> {
+fn ln(arg: BigRational) -> Result<BigRational, FunctionCallError> {
     match arg.to_f64() {
         Some(float) => {
             let result = float.ln();
             match BigRational::from_f64(result) {
                 Some(rat) => Ok(rat),
-                None => Err(EvalError::Overflow(arg)),
+                None => Err(FunctionCallError::Overflow(arg)),
             }
         }
-        None => Err(EvalError::Overflow(arg)),
+        None => Err(FunctionCallError::Overflow(arg)),
     }
 }
 
-fn sqrt(arg: BigRational) -> Result<BigRational, EvalError> {
+fn sqrt(arg: BigRational) -> Result<BigRational, FunctionCallError> {
     match arg.to_f64() {
         Some(float) => {
             let result = float.sqrt();
             match BigRational::from_f64(result) {
                 Some(rat) => Ok(rat),
-                None => Err(EvalError::Overflow(arg)),
+                None => Err(FunctionCallError::Overflow(arg)),
             }
         }
-        None => Err(EvalError::Overflow(arg)),
+        None => Err(FunctionCallError::Overflow(arg)),
     }
 }
 
-fn gcd(a: BigRational, b: BigRational) -> Result<BigRational, EvalError> {
-    if !a.is_integer() {
-        return Err(EvalError::NonIntegerFunctionArgument(
-            Function::GCD,
-            a.into(),
-        ));
-    }
-    if !b.is_integer() {
-        return Err(EvalError::NonIntegerFunctionArgument(
-            Function::GCD,
-            b.into(),
-        ));
-    }
-
-    let mut x = a.to_integer();
-    let mut y = b.to_integer();
+fn gcd(a: BigRational, b: BigRational) -> Result<BigRational, FunctionCallError> {
+    let mut x = check_integer(Function::GCD, a)?.to_integer();
+    let mut y = check_integer(Function::GCD, b)?.to_integer();
 
     // We could use the num::Integer::gcd() function, but I want to implement it myself.
     while !y.is_zero() {
@@ -212,41 +264,21 @@ fn gcd(a: BigRational, b: BigRational) -> Result<BigRational, EvalError> {
     Ok(x.into())
 }
 
-fn lcm(a: BigRational, b: BigRational) -> Result<BigRational, EvalError> {
+fn lcm(a: BigRational, b: BigRational) -> Result<BigRational, FunctionCallError> {
     Ok(&a * &b / gcd(a, b)?)
 }
 
-fn choose(n: BigRational, r: BigRational) -> Result<BigRational, EvalError> {
-    if !n.is_integer() {
-        return Err(EvalError::NonIntegerFunctionArgument(
-            Function::Choose,
-            n.into(),
-        ));
-    }
-    if !r.is_integer() {
-        return Err(EvalError::NonIntegerFunctionArgument(
-            Function::Choose,
-            r.into(),
-        ));
-    }
+fn choose(n: BigRational, r: BigRational) -> Result<BigRational, FunctionCallError> {
+    let n = check_integer(Function::Choose, n)?;
+    let r = check_integer(Function::Choose, r)?;
     Ok(permute(n, r.to_owned())? / factorial(r)?)
 }
 
-fn permute(n: BigRational, r: BigRational) -> Result<BigRational, EvalError> {
-    if !n.is_integer() {
-        return Err(EvalError::NonIntegerFunctionArgument(
-            Function::Permute,
-            n.into(),
-        ));
-    }
-    if !r.is_integer() {
-        return Err(EvalError::NonIntegerFunctionArgument(
-            Function::Permute,
-            r.into(),
-        ));
-    }
+fn permute(n: BigRational, r: BigRational) -> Result<BigRational, FunctionCallError> {
+    let n = check_integer(Function::Permute, n)?;
+    let r = check_integer(Function::Permute, r)?;
     if n < r {
-        return Ok(rat!(-1));
+        return Ok(BigRational::zero());
     }
     let n_int = n.to_integer();
     let mut denom: BigInt = &n_int - r.to_integer() + 1;
@@ -258,22 +290,13 @@ fn permute(n: BigRational, r: BigRational) -> Result<BigRational, EvalError> {
     Ok(result.into())
 }
 
-fn factorial(n: BigRational) -> Result<BigRational, EvalError> {
-    if !n.is_integer() {
-        return Err(EvalError::NonIntegerFunctionArgument(
-            Function::Permute,
-            n.into(),
-        ));
-    }
-    if n.is_zero() {
-        return Ok(rat!(1));
-    }
-    let n_int = n.to_integer();
+fn factorial(n: BigRational) -> Result<BigRational, FunctionCallError> {
+    let n_int = check_integer(Function::Factorial, n)?.to_integer();
     let mut result = BigInt::one();
-    let mut step = BigInt::one() + 1;
-    while step <= n_int {
-        result *= &step;
-        step += 1;
+    let mut term = BigInt::one() + 1;
+    while term <= n_int {
+        result *= &term;
+        term += 1;
     }
     Ok(result.into())
 }

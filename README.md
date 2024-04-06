@@ -229,6 +229,9 @@ Currently, the following functions are supported:
 | Absolute value       | `abs`       | 1                   |
 | Square root          | `sqrt`      | 1                   |
 | Natural logarithm    | `ln`        | 1                   |
+| Factorial            | `factorial` | 1                   |
+| Combination          | `choose`    | 2                   |
+| Permutation          | `permute`   | 2                   |
 
 ### Units
 
