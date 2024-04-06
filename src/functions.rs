@@ -81,7 +81,7 @@ pub enum Function {
     #[strum(serialize = "lcm")]
     LCM,
 
-    /// ## Combinatorics choose function
+    /// ## Combination function
     ///
     /// Expects 2 *integer* arguments.
     /// Returns the number of unique ways to choose R items from N items,
@@ -90,9 +90,9 @@ pub enum Function {
     ///
     /// See [https://en.wikipedia.org/wiki/Combination].
     #[strum(serialize = "choose")]
-    Choose,
+    Combination,
 
-    /// ## Combinatorics permutation function
+    /// ## Permutation function
     ///
     /// Expects 2 *integer* arguments.
     /// Returns the number of permutations of R items from N items,
@@ -101,7 +101,7 @@ pub enum Function {
     ///
     /// See [https://en.wikipedia.org/wiki/Permutation].
     #[strum(serialize = "permute")]
-    Permute,
+    Permutation,
 
     /// ## Factorial function
     ///
@@ -118,7 +118,7 @@ impl Function {
         use Function::*;
         match self {
             Sine | Cosine | AbsoluteValue | SquareRoot | NaturalLogarithm | Factorial => 1,
-            GCD | LCM | Choose | Permute => 2,
+            GCD | LCM | Combination | Permutation => 2,
         }
     }
 
@@ -149,8 +149,8 @@ impl Function {
             NaturalLogarithm => ln(arg!())?,
             GCD => gcd(arg!(), arg!())?,
             LCM => lcm(arg!(), arg!())?,
-            Choose => choose(arg!(), arg!())?,
-            Permute => permute(arg!(), arg!())?,
+            Combination => choose(arg!(), arg!())?,
+            Permutation => permute(arg!(), arg!())?,
             Factorial => factorial(arg!())?,
         }
         .into())
@@ -269,14 +269,14 @@ fn lcm(a: BigRational, b: BigRational) -> Result<BigRational, FunctionCallError>
 }
 
 fn choose(n: BigRational, r: BigRational) -> Result<BigRational, FunctionCallError> {
-    let n = check_integer(Function::Choose, n)?;
-    let r = check_integer(Function::Choose, r)?;
+    let n = check_integer(Function::Combination, n)?;
+    let r = check_integer(Function::Combination, r)?;
     Ok(permute(n, r.to_owned())? / factorial(r)?)
 }
 
 fn permute(n: BigRational, r: BigRational) -> Result<BigRational, FunctionCallError> {
-    let n = check_integer(Function::Permute, n)?;
-    let r = check_integer(Function::Permute, r)?;
+    let n = check_integer(Function::Permutation, n)?;
+    let r = check_integer(Function::Permutation, r)?;
     if n < r {
         return Ok(BigRational::zero());
     }
