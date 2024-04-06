@@ -19,7 +19,31 @@ along with Numbrs.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-//! Mathematical functions
+/*!
+# Mathematical functions
+
+Numbrs supports some functions, which take input arguments and return a single value.
+
+The [`Function`] enum represents the functions that can be used in the calculator.
+
+## Example
+
+```rust
+use numbrs::{
+    ast::Value,
+    functions::Function,
+};
+use num::{BigRational, FromPrimitive, ToPrimitive};
+
+let args: Vec<BigRational> = vec![
+    BigRational::from_u8(12).unwrap(),
+    BigRational::from_u8(15).unwrap(),
+];
+
+let result: Value = Function::GCD.eval(args).unwrap();
+assert!(matches!(result, Value::Number(ratio) if ratio.to_u8().unwrap() == 3));
+```
+ */
 
 use num::{BigInt, BigRational, FromPrimitive, Integer, One, Signed, ToPrimitive, Zero};
 use strum_macros::{Display, EnumString};
