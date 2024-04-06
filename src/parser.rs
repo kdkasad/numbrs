@@ -303,6 +303,9 @@ mod tests {
             };
         }
         macro_rules! subexpr {
+            ( (f: $($e:tt)+ ) ) => {
+                func!( $($e)+ )
+            };
             ( ( $($e:tt)+ ) ) => {
                 binexpr!( $($e)+ )
             };
@@ -311,10 +314,10 @@ mod tests {
         }
 
         macro_rules! func {
-            ( $name:ident $arg:tt ) => {
+            ( $name:ident $( $arg:tt ),+ ) => {
                 Node::FunctionCall(FunctionCall {
                     function: Function::from_str(stringify!($name)).unwrap(),
-                    args: vec![subexpr!($arg)],
+                    args: vec![$( subexpr!($arg), )+],
                 })
             };
         }
@@ -351,6 +354,18 @@ mod tests {
                 "cos ( pi + 3 degrees )",
                 func!(cos ("+" pi ("*" 3 degrees))),
             ),
+            ("gcd(10 + 5, 12)", func!(gcd ("+" 10 5), 12)),
+            ("factorial(1,2,3,4,5)", func!(factorial 1, 2, 3, 4, 5)),
+            ("fact(1,2,3,4,5)", func!(fact 1, 2, 3, 4, 5)),
+            ("a * b / gcd(a, b)", binexpr!("/" ("*" a b) (f: gcd a, b))),
+            (
+                "choose(foo = 1 + 2^3)",
+                func!(choose ("=" foo ("+" 1 ("^" 2 3)))),
+            ),
+            (
+                "snooze(foo = 1 + 2^3)", // Not a function identifier
+                binexpr!("*" snooze ("=" foo ("+" 1 ("^" 2 3)))),
+            ),
         ];
 
         for (input, expected_result) in cases {
@@ -375,11 +390,14 @@ mod tests {
         }
 
         testfor! {
-            ParseError::EndOfStream => ["", "\t \t\n\n  ", "1 +", "1 + 8 ^ ", "+", "-", "1 * +"];
+            ParseError::EndOfStream => ["", "\t \t\n\n  ", "1 +", "1 + 8 ^ ", "+", "-", "1 * +", "("];
             ParseError::ExpectedOperand("operator") => ["*", "/"];
+            ParseError::ExpectedOperand("list separator") => ["sin(,)", ",", "lcm(,12)"];
+            ParseError::ExpectedOperand("group close") => [")", "gcd(12,)", "cos()"];
             ParseError::ExpectedToken("operator", _got) => ["1 a 2"];
-            ParseError::IllegalToken(_) => ["123 ? 456", "&", "#001"];
+            ParseError::IllegalToken(_) => ["123 ? 456", "&", "#001", "1234 , 5678"];
             ParseError::ParseNumberLiteral(_) => ["1.2.3"];
+            ParseError::UnmatchedGroup => ["1 + (2", "1 + 2)", "1 + (2 + 3", "1 + 2) + 3"];
         }
     }
 }
