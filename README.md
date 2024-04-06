@@ -145,6 +145,10 @@ The same applies for two units or variables, so a Newton can be represented as
 `kg m/s^2` rather than `kg * m/s^2`. The expression `2 3` is also interpreted as
 `2 * 3`, but that is disgusting syntax and should not be used.
 
+The only caveat to this is that some implicit multiplications will be
+interpreted as function calls. See the [Function call syntax
+problems](#function-call-syntax-problems) section below for details.
+
 ### Variables
 
 Values can be stored in variables. Variable names can contain letters, numbers,
@@ -209,14 +213,14 @@ decimal point contain zeros.
 
 ### Functions
 
-Numbrs supoprt some built-in functions. Functions are called by preceding a
+Numbrs supports some built-in functions. Functions are called by preceding a
 group (e.g. parentheses) with the function identifier.
 
 Example:
 
     $ numbrs
     > sin(0)
-    0
+    0.00000
     > cos(180 degrees)
     -1.00000
 
@@ -232,6 +236,24 @@ Currently, the following functions are supported:
 | Factorial            | `factorial` | 1                   |
 | Combination          | `choose`    | 2                   |
 | Permutation          | `permute`   | 2                   |
+
+#### Function call syntax problems
+
+Any group which comes after an identifier which matches the name of a function
+will be treated as a function call. This means that functions will mask variable names.
+
+Example:
+
+    $ numbrs
+    > foo = 5
+    5.00000
+    > ln = 5
+    5.00000
+    > foo(2)
+    10.00000
+    > ln(2)
+    0.69315
+
 
 ### Units
 
