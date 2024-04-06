@@ -92,6 +92,7 @@ pub enum Token {
     /// Used to separate function arguments.
     ///
     /// Contains the specific character found in the input.
+    #[strum(serialize = "list separator")]
     ListSeparator(char),
 
     /// ## Illegal token
