@@ -112,7 +112,7 @@ pub enum Function {
     /// where N is the first argument and R is the second.
     /// If N < R, returns 0.
     ///
-    /// See [https://en.wikipedia.org/wiki/Combination].
+    /// See <https://en.wikipedia.org/wiki/Combination>.
     #[strum(serialize = "choose")]
     Combination,
 
@@ -123,7 +123,7 @@ pub enum Function {
     /// where N is the first argument and R is the second.
     /// If N < R, returns 0.
     ///
-    /// See [https://en.wikipedia.org/wiki/Permutation].
+    /// See <https://en.wikipedia.org/wiki/Permutation>.
     #[strum(serialize = "permute")]
     Permutation,
 
