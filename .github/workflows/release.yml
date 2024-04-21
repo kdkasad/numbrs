@@ -10,6 +10,10 @@ jobs:
     name: Build
     uses: ./.github/workflows/build.yml
 
+  publish_docs:
+    name: Publish documentation
+    uses: ./.github/workflows/publish-docs.yml
+
   publish-binaries:
     name: Upload Numbrs binaries to GitHub release
     if: ${{ github.event_name == 'release' }}
