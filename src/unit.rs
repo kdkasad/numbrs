@@ -277,6 +277,12 @@ impl Units {
     }
 }
 
+impl Default for Units {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Mul for Units {
     type Output = Self;
 
