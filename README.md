@@ -1,5 +1,7 @@
 # Numbrs
 
+[![Run tests](https://github.com/kdkasad/numbrs/actions/workflows/test.yml/badge.svg)](https://github.com/kdkasad/numbrs/actions/workflows/test.yml)
+
 A text-based calculator written in Rust.
 
 Numbrs consists of both a library and a binary crate.
